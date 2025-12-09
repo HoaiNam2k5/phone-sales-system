@@ -1,0 +1,216 @@
+﻿@model List<QL_Kho.Models.SANPHAM>
+@{
+    ViewBag.Title = "Quản lý sản phẩm";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<!-- Page Heading -->
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <h1 class="h3 mb-0 text-gray-800">
+        <i class="fas fa-boxes text-primary"></i> Quản lý sản phẩm
+    </h1>
+    <a href="@Url.Action("ThemSanPham", "Admin")" class="btn btn-primary shadow-sm">
+        <i class="fas fa-plus fa-sm"></i> Thêm sản phẩm
+    </a>
+</div>
+
+<!-- Filters -->
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">
+            <i class="fas fa-filter"></i> Tìm kiếm & Lọc
+        </h6>
+    </div>
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-4">
+                <label class="form-label">Tìm kiếm</label>
+                <input type="text" name="search" class="form-control" placeholder="Tên hoặc mã sản phẩm..." value="@ViewBag.Search">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Danh mục</label>
+                <select name="category" class="form-control">
+                    <option value="">-- Tất cả --</option>
+                    @if (ViewBag.DanhMuc != null)
+                    {
+                        foreach (var dm in (List<QL_Kho.Models.DANHMUC>)ViewBag.DanhMuc)
+                        {
+                            <option value="@dm.MaDM" @(ViewBag.Category == dm.MaDM ? "selected" : "")>@dm.TenDM</option>
+                        }
+                    }
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Trạng thái</label>
+                <select name="status" class="form-control">
+                    <option value="">-- Tất cả --</option>
+                    <option value="HoatDong" @(ViewBag.Status == "HoatDong" ? "selected" : "")>Hoạt động</option>
+                    <option value="HetHang" @(ViewBag.Status == "HetHang" ? "selected" : "")>Hết hàng</option>
+                    <option value="KhongHoatDong" @(ViewBag.Status == "KhongHoatDong" ? "selected" : "")>Không hoạt động</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">&nbsp;</label>
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="fas fa-search"></i> Tìm kiếm
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Products Table -->
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">
+            Danh sách sản phẩm <span class="badge bg-primary">@Model.Count</span>
+        </h6>
+    </div>
+    <div class="card-body">
+        @if (TempData["Success"] != null)
+        {
+            <div class="alert alert-success alert-dismissible fade show">
+                <i class="fas fa-check-circle"></i> @TempData["Success"]
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        }
+        @if (TempData["Error"] != null)
+        {
+            <div class="alert alert-danger alert-dismissible fade show">
+                <i class="fas fa-exclamation-circle"></i> @TempData["Error"]
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        }
+
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover" id="dataTable">
+                <thead class="table-light">
+                    <tr>
+                        <th width="80">Hình ảnh</th>
+                        <th>Mã SP</th>
+                        <th>Tên sản phẩm</th>
+                        <th>Danh mục</th>
+                        <th>Giá</th>
+                        <th>Tồn kho</th>
+                        <th>Trạng thái</th>
+                        <th width="150">Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model != null && Model.Any())
+                    {
+                        foreach (var item in Model)
+                        {
+                            <tr>
+                                <td class="text-center">
+                                    @if (!string.IsNullOrEmpty(item.HinhAnh))
+                                    {
+                                        <img src="@Url.Content("~/Content/images/" + item.HinhAnh)"
+                                             alt="@item.TenSP"
+                                             class="img-thumbnail"
+                                             onerror="this.src='https://via.placeholder.com/60'"
+                                             style="width: 60px; height: 60px; object-fit: cover;">
+                                    }
+                                    else
+                                    {
+                                        <img src="https://via.placeholder.com/60" class="img-thumbnail" style="width: 60px; height: 60px;">
+                                    }
+                                </td>
+                                <td><strong>@item.MaSP</strong></td>
+                                <td>@item.TenSP</td>
+                                <td>@(item.DANHMUC?.TenDM ?? "N/A")</td>
+                                <td><strong class="text-success">@string.Format("{0:N0}", item.DonGia) đ</strong></td>
+                                <td>
+                                    @if (item.SoLuongTon <= 10)
+                                    {
+                                        <span class="badge bg-danger">@item.SoLuongTon</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-success">@item.SoLuongTon</span>
+                                    }
+                                </td>
+                                <td>
+                                    @switch (item.TrangThai)
+                                    {
+                                        case "HoatDong":
+                                            <span class="badge bg-success">Hoạt động</span>
+                                            break;
+                                        case "HetHang":
+                                            <span class="badge bg-warning">Hết hàng</span>
+                                            break;
+                                        default:
+                                            <span class="badge bg-secondary">Không hoạt động</span>
+                                            break;
+                                    }
+                                </td>
+                                <td>
+                                    <a href="@Url.Action("SuaSanPham", "Admin", new { id = item.MaSP.Trim() })"
+                                       class="btn btn-sm btn-warning"
+                                       title="Sửa">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <button type="button"
+                                            class="btn btn-sm btn-danger btn-delete"
+                                            data-id="@item.MaSP.Trim()"
+                                            data-name="@item.TenSP"
+                                            title="Xóa">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="8" class="text-center text-muted py-4">
+                                <i class="fas fa-inbox fa-3x mb-3 d-block"></i>
+                                <p class="mb-0">Không tìm thấy sản phẩm nào</p>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@section scripts {
+    <script>
+        $(document).ready(function() {
+            // DataTable
+            $('#dataTable').DataTable({
+                "language": {
+                    "url": "//cdn.datatables.net/plug-ins/1.13.7/i18n/vi.json"
+                },
+                "order": [[1, "desc"]]
+            });
+
+            // Delete product
+            $('.btn-delete').click(function() {
+                var maSP = $(this).data('id');
+                var tenSP = $(this).data('name');
+
+                if (confirm('Bạn có chắc muốn xóa sản phẩm "' + tenSP + '"?\nSản phẩm sẽ chuyển sang trạng thái "Không hoạt động".')) {
+                    $.ajax({
+                        url: '@Url.Action("XoaSanPham", "Admin")',
+                        type: 'POST',
+                        data: { maSP: maSP },
+                        success: function(result) {
+                            if (result.success) {
+                                alert(result.message);
+                                location.reload();
+                            } else {
+                                alert(result.message);
+                            }
+                        },
+                        error: function() {
+                            alert('Có lỗi xảy ra!');
+                        }
+                    });
+                }
+            });
+        });
+    </script>
+}

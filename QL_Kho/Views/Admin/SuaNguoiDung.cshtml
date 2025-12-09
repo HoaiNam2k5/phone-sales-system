@@ -1,0 +1,141 @@
+﻿@model QL_Kho.Models.NGUOIDUNG
+@{
+    ViewBag.Title = "Sửa người dùng";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <h1 class="h3 mb-0 text-gray-800">
+        <i class="fas fa-user-edit text-warning"></i> Sửa thông tin người dùng
+    </h1>
+    <a href="@Url.Action("QuanLyNguoiDung", "Admin" )" class="btn btn-secondary shadow-sm">
+        <i class="fas fa-arrow-left"></i> Quay lại
+    </a>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3 bg-warning">
+                <h6 class="m-0 font-weight-bold text-white">Thông tin: @Model.TenNguoiDung</h6>
+            </div>
+            <div class="card-body">
+                @if (ViewBag.Error != null)
+                {
+                    <div class="alert alert-danger alert-dismissible fade show">
+                        <i class="fas fa-exclamation-circle"></i> @ViewBag.Error
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                }
+
+                @using (Html.BeginForm("SuaNguoiDung", "Admin", FormMethod.Post, new { @class = "needs-validation", novalidate = "novalidate" }))
+                {
+                    @Html.AntiForgeryToken()
+                    @Html.HiddenFor(m => m.MaUser)
+                        @Html.HiddenFor(m => m.MatKhau)
+
+    <div class="row g-3">
+        <div class="col-md-6">
+            <label class="form-label fw-bold">Mã người dùng</label>
+            @Html.TextBoxFor(m => m.MaUser, new { @class = "form-control bg-light", @readonly = "readonly" })
+        </div>
+
+        <div class="col-md-6">
+            <label class="form-label fw-bold">Vai trò <span class="text-danger">*</span></label>
+            @Html.DropDownListFor(m => m.Role, new SelectList(new[] {
+                new { Value = "admin", Text = "Admin" },
+                new { Value = "quanly", Text = "Quản lý" },
+                new { Value = "khach", Text = "Khách hàng" }
+            }, "Value", "Text"), new { @class = "form-control" })
+        </div>
+
+        <div class="col-md-12">
+            <label class="form-label fw-bold">Tên người dùng <span class="text-danger">*</span></label>
+            @Html.TextBoxFor(m => m.TenNguoiDung, new { @class = "form-control", required = "required" })
+            @Html.ValidationMessageFor(m => m.TenNguoiDung, "", new { @class = "text-danger small" })
+        </div>
+
+        <div class="col-md-12">
+            <label class="form-label fw-bold">Email <span class="text-danger">*</span></label>
+            @Html.TextBoxFor(m => m.Email, new { @class = "form-control", type = "email", required = "required" })
+            @Html.ValidationMessageFor(m => m.Email, "", new { @class = "text-danger small" })
+        </div>
+
+        <div class="col-md-6">
+            <label class="form-label fw-bold">Số điện thoại</label>
+            @Html.TextBoxFor(m => m.SDT, new { @class = "form-control", type = "tel", pattern = "[0-9]{10}" })
+            <small class="form-text text-muted">Định dạng: 10 chữ số</small>
+        </div>
+
+        <div class="col-md-6">
+            <label class="form-label fw-bold">Trạng thái</label>
+            @Html.DropDownListFor(m => m.TrangThai, new SelectList(new[] {
+            new { Value = "HoatDong", Text = "Hoạt động" },
+            new { Value = "KhongHoatDong", Text = "Không hoạt động" }
+            }, "Value", "Text"), new { @class = "form-control" })
+        </div>
+
+        <div class="col-md-12">
+            <label class="form-label fw-bold">Địa chỉ</label>
+            @Html.TextAreaFor(m => m.DiaChi, new { @class = "form-control", rows = 3, placeholder = "Nhập địa chỉ..." })
+        </div>
+    </div>
+
+    <hr class="my-4">
+
+    <div class="alert alert-info">
+        <i class="fas fa-info-circle"></i> <strong>Lưu ý:</strong>
+        Không thể thay đổi mật khẩu từ trang này. Người dùng cần đổi mật khẩu từ tài khoản của họ.
+    </div>
+
+    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+        <button type="submit" class="btn btn-warning btn-lg px-4">
+            <i class="fas fa-save"></i> Cập nhật
+        </button>
+        <a href="@Url.Action("QuanLyNguoiDung", "Admin" )" class="btn btn-secondary btn-lg px-4">
+            <i class="fas fa-times"></i> Hủy
+        </a>
+    </div>
+    }
+</div>
+</div>
+
+<!-- Thống kê hoạt động -->
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">
+            <i class="fas fa-chart-bar"></i> Thống kê hoạt động
+        </h6>
+    </div>
+    <div class="card-body">
+        <div class="row text-center">
+            <div class="col-md-4 mb-3">
+                <div class="border rounded p-3">
+                    <i class="fas fa-shopping-cart fa-2x text-primary mb-2"></i>
+                    <h4 class="mb-0">@(Model.DONHANGs?.Count ?? 0)</h4>
+                    <small class="text-muted">Tổng đơn hàng</small>
+                </div>
+            </div>
+            <div class="col-md-4 mb-3">
+                <div class="border rounded p-3">
+                    <i class="fas fa-dollar-sign fa-2x text-success mb-2"></i>
+                    <h4 class="mb-0">@((Model.DONHANGs?.Sum(d => d.TongTien) ?? 0).ToString("N0")) &#273;</h4>
+                    <small class="text-muted">Tổng chi tiêu</small>
+                </div>
+            </div>
+            <div class="col-md-4 mb-3">
+                <div class="border rounded p-3">
+                    <i class="fas fa-calendar fa-2x text-info mb-2"></i>
+                    <h4 class="mb-0">@(Model.NgayTao?.ToString("dd/MM/yyyy") ?? "N/A")</h4>
+                    <small class="text-muted">Ngày tham gia</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</div>
+</div>
+
+@section scripts {
+    @Scripts.Render("~/bundles/jqueryval")
+}

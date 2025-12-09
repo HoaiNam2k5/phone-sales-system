@@ -1,0 +1,172 @@
+﻿@model List<QL_Kho.Models.DONHANG>
+@{
+    ViewBag.Title = "Quản lý đơn hàng";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <h1 class="h3 mb-0 text-gray-800">
+        <i class="fas fa-shopping-cart text-primary"></i> Quản lý đơn hàng
+    </h1>
+</div>
+
+<!-- Filters -->
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">
+            <i class="fas fa-filter"></i> Tìm kiếm & Lọc
+        </h6>
+    </div>
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-5">
+                <label class="form-label">Tìm kiếm</label>
+                <input type="text" name="search" class="form-control" placeholder="Mã đơn hàng hoặc mã khách hàng..." value="@ViewBag.Search">
+            </div>
+            <div class="col-md-5">
+                <label class="form-label">Trạng thái</label>
+                <select name="status" class="form-control">
+                    <option value="">-- Tất cả --</option>
+                    <option value="Chờ xác nhận" @(ViewBag.Status == "Chờ xác nhận" ? "selected" : "")>Chờ xác nhận</option>
+                    <option value="Đã xác nhận" @(ViewBag.Status == "Đã xác nhận" ? "selected" : "")>Đã xác nhận</option>
+                    <option value="Đang giao" @(ViewBag.Status == "Đang giao" ? "selected" : "")>Đang giao</option>
+                    <option value="Đã giao" @(ViewBag.Status == "Đã giao" ? "selected" : "")>Đã giao</option>
+                    <option value="Đã hủy" @(ViewBag.Status == "Đã hủy" ? "selected" : "")>Đã hủy</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">&nbsp;</label>
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="fas fa-search"></i> Tìm
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Orders Table -->
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">
+            Danh sách đơn hàng <span class="badge bg-primary">@Model.Count</span>
+        </h6>
+    </div>
+    <div class="card-body">
+        @if (TempData["Success"] != null)
+        {
+            <div class="alert alert-success alert-dismissible fade show">
+                <i class="fas fa-check-circle"></i> @TempData["Success"]
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        }
+
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover" id="dataTable">
+                <thead class="table-light">
+                    <tr>
+                        <th>Mã ĐH</th>
+                        <th>Khách hàng</th>
+                        <th>Ngày đặt</th>
+                        <th>Tổng tiền</th>
+                        <th>PT Thanh toán</th>
+                        <th>Trạng thái</th>
+                        <th width="200">Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model != null && Model.Any())
+                    {
+                        foreach (var item in Model)
+                        {
+                            <tr>
+                                <td><strong>@item.MaDH</strong></td>
+                                <td>@(item. NGUOIDUNG?.TenNguoiDung ?? "N/A")</td>
+                                <td>@item.NgayDat.ToString("dd/MM/yyyy HH:mm")</td>
+                                <td><strong class="text-success">@item.TongTien.ToString("N0") &#273;</strong></td>
+                                <td>
+                                    @if (item.PhuongThucTT == "COD")
+                                    {
+                                        <span class="badge bg-secondary">COD</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-success">@item.PhuongThucTT</span>
+                                    }
+                                </td>
+                                <td>
+                                    <select class="form-select form-select-sm status-select" data-id="@item.MaDH">
+                                        <option value="Chờ xác nhận" @(item.TrangThai == "Chờ xác nhận" ? "selected" : "")>Chờ xác nhận</option>
+                                        <option value="Đã xác nhận" @(item.TrangThai == "Đã xác nhận" ? "selected" : "")>Đã xác nhận</option>
+                                        <option value="Đang giao" @(item.TrangThai == "Đang giao" ? "selected" : "")>Đang giao</option>
+                                        <option value="Đã giao" @(item.TrangThai == "Đã giao" ? "selected" : "")>Đã giao</option>
+                                        <option value="Đã hủy" @(item.TrangThai == "Đã hủy" ? "selected" : "")>Đã hủy</option>
+                                    </select>
+                                </td>
+                                <td>
+                                    <a href="@Url.Action("ChiTietDonHang", "Admin", new { id = item.MaDH.Trim() })"
+                                       class="btn btn-sm btn-info"
+                                       title="Chi tiết">
+                                        <i class="fas fa-eye"></i> Chi tiết
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="7" class="text-center text-muted py-4">
+                                <i class="fas fa-inbox fa-3x mb-3 d-block"></i>
+                                <p class="mb-0">Không tìm thấy đơn hàng nào</p>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@section scripts {
+    <script>
+        $(document).ready(function() {
+            $('#dataTable').DataTable({
+                "language": {
+                    "url":"//cdn.datatables.net/plug-ins/1.13.7/i18n/vi.json"
+                },
+                "order": [[2, "desc"]]
+            });
+
+            // Update order status
+            $('.status-select'). change(function() {
+                var maDH = $(this).data('id');
+                var trangThai = $(this).val();
+                var originalValue = $(this).find('option[selected]').val();
+                var selectElement = $(this);
+
+                if (confirm('Bạn có chắc muốn cập nhật trạng thái đơn hàng này? ')) {
+                    $.ajax({
+                        url: '@Url.Action("CapNhatTrangThaiDonHang", "Admin")',
+                        type: 'POST',
+                        data: { maDH: maDH, trangThai: trangThai },
+                        success: function(result) {
+                            if (result.success) {
+                                alert(result.message);
+                                location.reload();
+                            } else {
+                                alert(result.message);
+                                selectElement.val(originalValue);
+                            }
+                        },
+                        error: function() {
+                            alert('Có lỗi xảy ra! ');
+                            selectElement.val(originalValue);
+                        }
+                    });
+                } else {
+                    selectElement.val(originalValue);
+                }
+            });
+        });
+    </script>
+}

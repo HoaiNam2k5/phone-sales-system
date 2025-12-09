@@ -8,12 +8,10 @@ namespace QL_Kho
         public static void RegisterRoutes(RouteCollection routes)
         {
             routes.IgnoreRoute("{resource}.axd/{*pathInfo}");
-            // Route cho Admin
-            routes.MapRoute(
-                name: "Admin",
-                url: "Admin/{action}/{id}",
-                defaults: new { controller = "Admin", action = "Index", id = UrlParameter.Optional }
-            );
+
+            // ← THÊM DÒNG NÀY
+            routes.MapMvcAttributeRoutes();
+
             routes.MapRoute(
                 name: "Default",
                 url: "{controller}/{action}/{id}",

@@ -1,0 +1,85 @@
+﻿@model QL_Kho.Models.NHACUNGCAP
+@{
+    ViewBag.Title = "Thêm nhà cung cấp";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <h1 class="h3 mb-0 text-gray-800">
+        <i class="fas fa-plus-circle text-primary"></i> Thêm nhà cung cấp mới
+    </h1>
+    <a href="@Url.Action("QuanLyNhaCungCap", "Admin")" class="btn btn-secondary shadow-sm">
+        <i class="fas fa-arrow-left"></i> Quay lại
+    </a>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Thông tin nhà cung cấp</h6>
+            </div>
+            <div class="card-body">
+                @if (ViewBag.Error != null)
+                {
+                    <div class="alert alert-danger alert-dismissible fade show">
+                        <i class="fas fa-exclamation-circle"></i> @ViewBag.Error
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                }
+
+                @using (Html.BeginForm("ThemNhaCungCap", "Admin", FormMethod.Post, new { @class = "needs-validation", novalidate = "novalidate" }))
+                {
+                    @Html.AntiForgeryToken()
+
+                    <div class="row g-3">
+                        <div class="col-md-12">
+                            <label class="form-label fw-bold">Tên nhà cung cấp <span class="text-danger">*</span></label>
+                            @Html.TextBoxFor(m => m.TenNCC, new { @class = "form-control", placeholder = "Nhập tên nhà cung cấp", required = "required" })
+                            @Html.ValidationMessageFor(m => m.TenNCC, "", new { @class = "text-danger small" })
+                        </div>
+
+                        <div class="col-md-12">
+                            <label class="form-label fw-bold">Địa chỉ</label>
+                            @Html.TextBoxFor(m => m.DiaChi, new { @class = "form-control", placeholder = "Nhập địa chỉ" })
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Số điện thoại</label>
+                            @Html.TextBoxFor(m => m.SDT, new { @class = "form-control", placeholder = "0909123456", type = "tel", pattern = "[0-9]{10}" })
+                            <small class="form-text text-muted">Định dạng: 10 chữ số</small>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Email</label>
+                            @Html.TextBoxFor(m => m.Email, new { @class = "form-control", placeholder = "example@email.com", type = "email" })
+                        </div>
+
+                        <div class="col-md-12">
+                            <label class="form-label fw-bold">Trạng thái</label>
+                            @Html.DropDownListFor(m => m.TrangThai, new SelectList(new[] {
+                                new { Value = "HoatDong", Text = "Hoạt động" },
+                                new { Value = "KhongHoatDong", Text = "Không hoạt động" }
+                            }, "Value", "Text", "HoatDong"), new { @class = "form-control" })
+                        </div>
+                    </div>
+
+                    <hr class="my-4">
+
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <button type="submit" class="btn btn-primary btn-lg px-4">
+                            <i class="fas fa-save"></i> Lưu nhà cung cấp
+                        </button>
+                        <a href="@Url.Action("QuanLyNhaCungCap", "Admin")" class="btn btn-secondary btn-lg px-4">
+                            <i class="fas fa-times"></i> Hủy
+                        </a>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@section scripts {
+    @Scripts.Render("~/bundles/jqueryval")
+}

@@ -1,0 +1,248 @@
+﻿@model List<QL_Kho.ViewModels.BaoCaoDoanhThuViewModel>
+@{
+    ViewBag.Title = "Báo cáo doanh thu";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <h1 class="h3 mb-0 text-gray-800">
+        <i class="fas fa-chart-line text-primary"></i> Báo cáo doanh thu
+    </h1>
+    <button class="btn btn-success shadow-sm" onclick="exportToExcel()">
+        <i class="fas fa-file-excel"></i> Xuất Excel
+    </button>
+</div>
+
+<!-- Filters -->
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">
+            <i class="fas fa-calendar-alt"></i> Chọn khoảng thời gian
+        </h6>
+    </div>
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-4">
+                <label class="form-label fw-bold">Từ ngày</label>
+                <input type="date" name="tuNgay" class="form-control" value="@ViewBag.TuNgay" required>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label fw-bold">Đến ngày</label>
+                <input type="date" name="denNgay" class="form-control" value="@ViewBag.DenNgay" required>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">&nbsp;</label>
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="fas fa-search"></i> Xem báo cáo
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Summary Cards -->
+@if (Model != null && Model.Any())
+{
+    var tongDoanhThu = Model.Sum(x => x.TongDoanhThu);
+    var tongHoaDon = Model.Sum(x => x.SoLuongHoaDon);
+    var trungBinh = tongHoaDon > 0 ? tongDoanhThu / tongHoaDon : 0;
+
+    <div class="row mb-4">
+        <div class="col-xl-4 col-md-6 mb-3">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                Tổng doanh thu
+                            </div>
+                            <div class="h4 mb-0 font-weight-bold text-success">
+                                @tongDoanhThu.ToString("N0") &#273;
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-dollar-sign fa-2x text-success"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-4 col-md-6 mb-3">
+            <div class="card border-left-info shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                Tổng đơn hàng
+                            </div>
+                            <div class="h4 mb-0 font-weight-bold text-info">
+                                @tongHoaDon
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-shopping-cart fa-2x text-info"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-4 col-md-6 mb-3">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                Doanh thu TB/đơn
+                            </div>
+                            <div class="h4 mb-0 font-weight-bold text-primary">
+                                @trungBinh.ToString("N0") &#273;
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-chart-bar fa-2x text-primary"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- Report Table -->
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">
+            Chi tiết doanh thu theo ngày
+        </h6>
+    </div>
+    <div class="card-body">
+        @if (Model != null && Model.Any())
+        {
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover" id="reportTable">
+                    <thead class="table-light">
+                        <tr>
+                            <th>STT</th>
+                            <th>Ngày</th>
+                            <th>Số lượng đơn</th>
+                            <th>Tổng doanh thu</th>
+                            <th>Doanh thu TB</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @{
+                            var stt = 1;
+                        }
+                        @foreach (var item in Model)
+                        {
+                            <tr>
+                                <td>@stt</td>
+                                <td>@item.Ngay.ToString("dd/MM/yyyy (dddd)", new System.Globalization.CultureInfo("vi-VN"))</td>
+                                <td class="text-center"><span class="badge bg-info">@item.SoLuongHoaDon</span></td>
+                                <td class="text-end"><strong class="text-success">@item.TongDoanhThu.ToString("N0") &#273;</strong></td>
+                                <td class="text-end">@item.DoanhThuTrungBinh.ToString("N0") &#273;</td>
+                            </tr>
+                            stt++;
+                        }
+                    </tbody>
+                    <tfoot class="table-light">
+                        <tr>
+                            <th colspan="2" class="text-end">TỔNG CỘNG:</th>
+                            <th class="text-center">@Model.Sum(x => x.SoLuongHoaDon)</th>
+                            <th class="text-end"><strong class="text-danger">@Model.Sum(x => x.TongDoanhThu).ToString("N0") &#273;</strong></th>
+                            <th></th>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+
+            <!-- Chart -->
+            <div class="mt-4">
+                <canvas id="revenueChart" style="max-height: 400px;"></canvas>
+            </div>
+        }
+        else
+        {
+            <div class="text-center text-muted py-5">
+                <i class="fas fa-chart-line fa-4x mb-3 d-block"></i>
+                <h5>Không có dữ liệu</h5>
+                <p class="mb-0">Vui lòng chọn khoảng thời gian để xem báo cáo</p>
+            </div>
+        }
+    </div>
+</div>
+
+@section scripts {
+    <script src="https://cdn.jsdelivr. net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+    <script>
+        $(document).ready(function() {
+            // DataTable
+            $('#reportTable').DataTable({
+                "language": {
+                    "url": "//cdn.datatables.net/plug-ins/1.13.7/i18n/vi.json"
+                },
+                "order": [[1, "desc"]],
+                "pageLength": 31
+            });
+
+            @if (Model != null && Model.Any())
+            {
+                <text>
+                // Chart
+                var ctx = document.getElementById('revenueChart').getContext('2d');
+                var chartData = {
+                    labels: [@Html.Raw(string.Join(",", Model.Select(x => "'" + x.Ngay. ToString("dd/MM") + "'")))],
+                    datasets: [{
+                        label: 'Doanh thu (đ)',
+                        data: [@Html.Raw(string.Join(",", Model.Select(x => x.TongDoanhThu)))],
+                        backgroundColor: 'rgba(28, 200, 138, 0.2)',
+                        borderColor: 'rgba(28, 200, 138, 1)',
+                        borderWidth: 2,
+                        tension: 0.4
+                    }]
+                };
+
+                new Chart(ctx, {
+                    type: 'line',
+                    data: chartData,
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        plugins: {
+                            legend: {
+                                display: true,
+                                position: 'top'
+                            },
+                            title: {
+                                display: true,
+                                text: 'Biểu đồ doanh thu theo ngày'
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    callback: function(value) {
+                                        return value.toLocaleString('vi-VN') + 'đ';
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+                </text>
+            }
+        });
+
+        // Export to Excel
+        function exportToExcel() {
+            var table = document.getElementById('reportTable');
+            var wb = XLSX.utils.table_to_book(table, {sheet: "BaoCaoDoanhThu"});
+            XLSX.writeFile(wb, 'BaoCaoDoanhThu_' + new Date().toISOString().slice(0,10) + '.xlsx');
+        }
+    </script>
+}

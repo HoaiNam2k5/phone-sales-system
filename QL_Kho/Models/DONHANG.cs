@@ -23,7 +23,7 @@ namespace QL_Kho.Models
         [StringLength(10)]
         [Column(TypeName = "char")]
         public string MaUser { get; set; }
-
+        
         public DateTime NgayDat { get; set; }
 
         [Column(TypeName = "decimal")]

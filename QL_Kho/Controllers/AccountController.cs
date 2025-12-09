@@ -5,7 +5,6 @@ using System.Linq;
 using System.Web.Mvc;
 using QL_Kho.Models;
 using QL_Kho.ViewModels;
-using CompareAttribute = System.ComponentModel.DataAnnotations.CompareAttribute; // FIX: Chỉ định rõ CompareAttribute
 
 namespace QL_Kho.Controllers
 {
@@ -60,7 +59,7 @@ namespace QL_Kho.Controllers
                         Session["Email"] = user.Email;
                         Session["CartCount"] = 0;
 
-                        TempData["Success"] = $"Chào mừng {user.TenNguoiDung}! ";
+                        TempData["Success"] = $"Chào mừng {user.TenNguoiDung}!";
 
                         // Chuyển hướng theo role
                         if (user.Role == "admin" || user.Role == "quanly")
@@ -128,7 +127,7 @@ namespace QL_Kho.Controllers
                         usernameParam, passParam, emailParam, sdtParam, diachiParam, roleParam
                     );
 
-                    TempData["Success"] = "Đăng ký thành công! Vui lòng đăng nhập.";
+                    TempData["Success"] = "Đăng ký thành công!  Vui lòng đăng nhập.";
                     return RedirectToAction("Login");
                 }
                 catch (Exception ex)
@@ -182,6 +181,65 @@ namespace QL_Kho.Controllers
             return View(model);
         }
 
+        // ✅ POST: Account/ThongTinCaNhan (THÊM MỚI)
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public ActionResult ThongTinCaNhan(ThongTinCaNhanViewModel model)
+        {
+            if (Session["UserID"] == null)
+            {
+                return RedirectToAction("Login");
+            }
+
+            if (ModelState.IsValid)
+            {
+                try
+                {
+                    var userId = Session["UserID"].ToString();
+                    var user = db.NGUOIDUNGs.Find(userId);
+
+                    if (user == null)
+                    {
+                        TempData["Error"] = "Không tìm thấy thông tin người dùng";
+                        return View(model);
+                    }
+
+                    // Kiểm tra email trùng (nếu thay đổi)
+                    if (user.Email != model.Email)
+                    {
+                        var existingEmail = db.NGUOIDUNGs.Any(u => u.Email == model.Email && u.MaUser != userId);
+                        if (existingEmail)
+                        {
+                            ViewBag.Error = "Email đã được sử dụng bởi tài khoản khác";
+                            return View(model);
+                        }
+                    }
+
+                    // Cập nhật thông tin
+                    user.TenNguoiDung = model.TenNguoiDung;
+                    user.Email = model.Email;
+                    user.SDT = model.SDT;
+                    user.DiaChi = model.DiaChi;
+                    user.NgayCapNhat = DateTime.Now;
+
+                    db.SaveChanges();
+
+                    // Cập nhật lại Session
+                    Session["UserName"] = user.TenNguoiDung;
+                    Session["Email"] = user.Email;
+
+                    TempData["Success"] = "Cập nhật thông tin thành công! ";
+                    return RedirectToAction("ThongTinCaNhan");
+                }
+                catch (Exception ex)
+                {
+                    ViewBag.Error = "Lỗi: " + ex.Message;
+                }
+            }
+
+            return View(model);
+        }
+
         // GET: Account/DoiMatKhau
         public ActionResult DoiMatKhau()
         {
@@ -191,6 +249,56 @@ namespace QL_Kho.Controllers
             }
             return View();
         }
+
+        // ✅ POST: Account/DoiMatKhau (THÊM MỚI)
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public ActionResult DoiMatKhau(DoiMatKhauViewModel model)
+        {
+            if (Session["UserID"] == null)
+            {
+                return RedirectToAction("Login");
+            }
+
+            if (ModelState.IsValid)
+            {
+                try
+                {
+                    var userId = Session["UserID"].ToString();
+                    var user = db.NGUOIDUNGs.Find(userId);
+
+                    if (user == null)
+                    {
+                        TempData["Error"] = "Không tìm thấy thông tin người dùng";
+                        return View(model);
+                    }
+
+                    // Kiểm tra mật khẩu cũ
+                    if (user.MatKhau != model.MatKhauCu)
+                    {
+                        ViewBag.Error = "Mật khẩu cũ không đúng";
+                        return View(model);
+                    }
+
+                    // Cập nhật mật khẩu mới
+                    user.MatKhau = model.MatKhauMoi;
+                    user.NgayCapNhat = DateTime.Now;
+
+                    db.SaveChanges();
+
+                    TempData["Success"] = "Đổi mật khẩu thành công!  Vui lòng đăng nhập lại.";
+                    Session.Clear();
+                    return RedirectToAction("Login");
+                }
+                catch (Exception ex)
+                {
+                    ViewBag.Error = "Lỗi: " + ex.Message;
+                }
+            }
+
+            return View(model);
+        }
+
         // GET: Account/DonHangCuaToi
         public ActionResult DonHangCuaToi()
         {
@@ -207,6 +315,7 @@ namespace QL_Kho.Controllers
 
             return View(orders);
         }
+
         // GET: Account/ChiTietDonHang
         public ActionResult ChiTietDonHang(string id)
         {
@@ -240,11 +349,10 @@ namespace QL_Kho.Controllers
                 return RedirectToAction("DonHangCuaToi");
             }
 
-            // ✅ SỬA: THÊM NAMESPACE ĐẦY ĐỦ
             var chiTiet = (from ct in db.CHITIETDONHANGs
                            join sp in db.SANPHAMs on ct.MaSP.Trim() equals sp.MaSP.Trim()
                            where ct.MaDH.Trim() == id
-                           select new QL_Kho.ViewModels.ChiTietDonHangViewModel  // ✅ THÊM NAMESPACE
+                           select new ChiTietDonHangViewModel
                            {
                                MaCTDH = ct.MaCTDH,
                                MaSP = ct.MaSP,
@@ -325,94 +433,5 @@ namespace QL_Kho.Controllers
             }
             base.Dispose(disposing);
         }
-
-
     }
 }
-
-    #region ViewModels
-
-    public class RegisterViewModel
-    {
-        [Required(ErrorMessage = "Tên người dùng không được để trống")]
-        [StringLength(100)]
-        [Display(Name = "Tên người dùng")]
-        public string TenNguoiDung { get; set; }
-
-        [Required(ErrorMessage = "Mật khẩu không được để trống")]
-        [StringLength(255, MinimumLength = 6, ErrorMessage = "Mật khẩu phải có ít nhất 6 ký tự")]
-        [DataType(DataType.Password)]
-        [Display(Name = "Mật khẩu")]
-        public string MatKhau { get; set; }
-
-        [Required(ErrorMessage = "Xác nhận mật khẩu không được để trống")]
-        [DataType(DataType.Password)]
-        [System.ComponentModel.DataAnnotations.Compare("MatKhau", ErrorMessage = "Mật khẩu xác nhận không khớp")] // FIX: Sử dụng full namespace
-        [Display(Name = "Xác nhận mật khẩu")]
-        public string XacNhanMatKhau { get; set; }
-
-        [Required(ErrorMessage = "Email không được để trống")]
-        [EmailAddress(ErrorMessage = "Email không hợp lệ")]
-        [Display(Name = "Email")]
-        public string Email { get; set; }
-
-        [Phone(ErrorMessage = "Số điện thoại không hợp lệ")]
-        [Display(Name = "Số điện thoại")]
-        public string SDT { get; set; }
-
-        [Display(Name = "Địa chỉ")]
-        public string DiaChi { get; set; }
-    }
-
-    public class ThongTinCaNhanViewModel
-    {
-        public string MaUser { get; set; }
-
-        [Required(ErrorMessage = "Tên người dùng không được để trống")]
-        [Display(Name = "Tên người dùng")]
-        public string TenNguoiDung { get; set; }
-
-        [Required(ErrorMessage = "Email không được để trống")]
-        [EmailAddress(ErrorMessage = "Email không hợp lệ")]
-        [Display(Name = "Email")]
-        public string Email { get; set; }
-
-        [Phone(ErrorMessage = "Số điện thoại không hợp lệ")]
-        [Display(Name = "Số điện thoại")]
-        public string SDT { get; set; }
-
-        [Display(Name = "Địa chỉ")]
-        public string DiaChi { get; set; }
-    }
-// ✅ ViewModel cho chi tiết đơn hàng
-public class ChiTietDonHangViewModel
-{
-    public int MaCTDH { get; set; }
-    public string MaSP { get; set; }
-    public string TenSP { get; set; }
-    public string HinhAnh { get; set; }
-    public int SoLuong { get; set; }
-    public decimal DonGia { get; set; }
-    public decimal? ThanhTien { get; set; }
-}
-public class DoiMatKhauViewModel
-    {
-        [Required(ErrorMessage = "Vui lòng nhập mật khẩu cũ")]
-        [DataType(DataType.Password)]
-        [Display(Name = "Mật khẩu cũ")]
-        public string MatKhauCu { get; set; }
-
-        [Required(ErrorMessage = "Vui lòng nhập mật khẩu mới")]
-        [StringLength(255, MinimumLength = 6, ErrorMessage = "Mật khẩu phải có ít nhất 6 ký tự")]
-        [DataType(DataType.Password)]
-        [Display(Name = "Mật khẩu mới")]
-        public string MatKhauMoi { get; set; }
-
-        [Required(ErrorMessage = "Vui lòng xác nhận mật khẩu mới")]
-        [DataType(DataType.Password)]
-        [System.ComponentModel.DataAnnotations.Compare("MatKhauMoi", ErrorMessage = "Mật khẩu xác nhận không khớp")] // FIX
-        [Display(Name = "Xác nhận mật khẩu mới")]
-        public string XacNhanMatKhauMoi { get; set; }
-    }
-
-    #endregion

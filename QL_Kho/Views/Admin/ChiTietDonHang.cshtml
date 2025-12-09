@@ -1,0 +1,191 @@
+﻿@model List<QL_Kho.ViewModels.ChiTietDonHangViewModel>
+@{
+    ViewBag.Title = "Chi tiết đơn hàng";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    var donHang = (QL_Kho.Models.DONHANG)ViewBag.DonHang;
+}
+
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <h1 class="h3 mb-0 text-gray-800">
+        <i class="fas fa-file-invoice text-primary"></i> Chi tiết đơn hàng: @donHang.MaDH.Trim()
+    </h1>
+    <a href="@Url.Action("QuanLyDonHang", "Admin")" class="btn btn-secondary shadow-sm">
+        <i class="fas fa-arrow-left"></i> Quay lại
+    </a>
+</div>
+
+<div class="row">
+    <!-- Thông tin đơn hàng -->
+    <div class="col-lg-4 mb-4">
+        <div class="card shadow">
+            <div class="card-header py-3 bg-primary text-white">
+                <h6 class="m-0 font-weight-bold">Thông tin đơn hàng</h6>
+            </div>
+            <div class="card-body">
+                <table class="table table-sm table-borderless">
+                    <tr>
+                        <td class="fw-bold">Mã đơn hàng:</td>
+                        <td>@donHang.MaDH.Trim()</td>
+                    </tr>
+                    <tr>
+                        <td class="fw-bold">Khách hàng:</td>
+                        <td>@(donHang.NGUOIDUNG?.TenNguoiDung ?? "N/A")</td>
+                    </tr>
+                    <tr>
+                        <td class="fw-bold">Ngày đặt:</td>
+                        <td>@donHang.NgayDat.ToString("dd/MM/yyyy HH:mm")</td>
+                    </tr>
+                    <tr>
+                        <td class="fw-bold">Trạng thái:</td>
+                        <td>
+                            @{
+                                var badgeClass = "secondary";
+                                switch (donHang.TrangThai)
+                                {
+                                    case "Chờ xác nhận": badgeClass = "warning"; break;
+                                    case "Đã xác nhận": badgeClass = "info"; break;
+                                    case "Đang giao": badgeClass = "primary"; break;
+                                    case "Đã giao": badgeClass = "success"; break;
+                                    case "Đã hủy": badgeClass = "danger"; break;
+                                }
+                            }
+                            <span class="badge bg-@badgeClass">@donHang.TrangThai</span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="fw-bold">Địa chỉ giao:</td>
+                        <td>@donHang.DiaChiGiao</td>
+                    </tr>
+                    <tr>
+                        <td class="fw-bold">SĐT:</td>
+                        <td>@donHang.SDT</td>
+                    </tr>
+                    <tr>
+                        <td class="fw-bold">PT Thanh toán:</td>
+                        <td>
+                            @if (donHang.PhuongThucTT == "COD")
+                            {
+                                <span class="badge bg-secondary">COD</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-success">@donHang.PhuongThucTT</span>
+                            }
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="fw-bold">Ghi chú:</td>
+                        <td>@(donHang.GhiChu ?? "Không có")</td>
+                    </tr>
+                </table>
+
+                <hr>
+
+                <div class="d-grid">
+                    <select class="form-select mb-2" id="statusSelect">
+                        <option value="Chờ xác nhận" @(donHang.TrangThai == "Chờ xác nhận" ? "selected" : "")>Chờ xác nhận</option>
+                        <option value="Đã xác nhận" @(donHang.TrangThai == "Đã xác nhận" ? "selected" : "")>Đã xác nhận</option>
+                        <option value="Đang giao" @(donHang.TrangThai == "Đang giao" ? "selected" : "")>Đang giao</option>
+                        <option value="Đã giao" @(donHang.TrangThai == "Đã giao" ? "selected" : "")>Đã giao</option>
+                        <option value="Đã hủy" @(donHang.TrangThai == "Đã hủy" ? "selected" : "")>Đã hủy</option>
+                    </select>
+                    <button class="btn btn-primary" onclick="updateStatus()">
+                        <i class="fas fa-save"></i> Cập nhật trạng thái
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chi tiết sản phẩm -->
+    <div class="col-lg-8 mb-4">
+        <div class="card shadow">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Chi tiết sản phẩm</h6>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-bordered table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th width="80">Hình ảnh</th>
+                                <th>Tên sản phẩm</th>
+                                <th width="100">Đơn giá</th>
+                                <th width="80">SL</th>
+                                <th width="120">Thành tiền</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (Model != null && Model.Any())
+                            {
+                                foreach (var item in Model)
+                                {
+                                    <tr>
+                                        <td class="text-center">
+                                            @if (!string.IsNullOrEmpty(item.HinhAnh))
+                                            {
+                                                <img src="@Url.Content("~/Content/images/" + item.HinhAnh)"
+                                                     alt="@item.TenSP"
+                                                     class="img-thumbnail"
+                                                     onerror="this.src='https://via.placeholder.com/60'"
+                                                     style="width: 50px; height: 50px; object-fit: cover;">
+                                            }
+                                            else
+                                            {
+                                                <img src="https://via.placeholder.com/50" class="img-thumbnail">
+                                            }
+                                        </td>
+                                        <td>@item.TenSP</td>
+                                        <td class="text-end">@item.DonGia.ToString("N0") &#273;</td>
+                                        <td class="text-center"><strong>@item.SoLuong</strong></td>
+                                        <td class="text-end"><strong class="text-success">@(item.ThanhTien ?? 0)&#273;</strong></td>
+                                    </tr>
+                                }
+                            }
+                            else
+                            {
+                                <tr>
+                                    <td colspan="5" class="text-center text-muted">Không có sản phẩm</td>
+                                </tr>
+                            }
+                        </tbody>
+                        <tfoot>
+                            <tr class="table-light">
+                                <td colspan="4" class="text-end"><strong>TỔNG CỘNG:</strong></td>
+                                <td class="text-end"><h5 class="mb-0 text-danger">@donHang.TongTien.ToString("N0") &#273;</h5></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section scripts {
+    <script>
+        function updateStatus() {
+            var maDH = '@donHang.MaDH.Trim()';
+            var trangThai = $('#statusSelect'). val();
+
+            if (confirm('Bạn có chắc muốn cập nhật trạng thái đơn hàng? ')) {
+                $.ajax({
+                    url: '@Url.Action("CapNhatTrangThaiDonHang", "Admin")',
+                    type: 'POST',
+                    data: { maDH: maDH, trangThai: trangThai },
+                    success: function(result) {
+                        if (result.success) {
+                            alert(result.message);
+                            location.reload();
+                        } else {
+                            alert(result.message);
+                        }
+                    },
+                    error: function() {
+                        alert('Có lỗi xảy ra! ');
+                    }
+                });
+            }
+        }
+    </script>
+}

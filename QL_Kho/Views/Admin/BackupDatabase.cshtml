@@ -1,0 +1,379 @@
+﻿@{
+    ViewBag.Title = "Backup & Restore Database";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <h1 class="h3 mb-0 text-gray-800">
+        <i class="fas fa-database text-primary"></i> Backup & Restore Database
+    </h1>
+    <a href="@Url.Action("Dashboard", "Admin")" class="btn btn-secondary shadow-sm">
+        <i class="fas fa-arrow-left"></i> Quay lại
+    </a>
+</div>
+
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show">
+        <i class="fas fa-exclamation-circle"></i> @TempData["Error"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show">
+        <i class="fas fa-check-circle"></i> @TempData["Success"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<!-- Database Info -->
+<div class="row mb-4">
+    <div class="col-lg-6 mb-3">
+        <div class="card shadow border-left-primary">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                            Database Name
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">@ViewBag.DatabaseName</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-database fa-2x text-primary"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-6 mb-3">
+        <div class="card shadow border-left-info">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                            Server Name
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">@ViewBag.ServerName</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-server fa-2x text-info"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Backup Actions -->
+<div class="row mb-4">
+    <div class="col-lg-6 mb-3">
+        <div class="card shadow">
+            <div class="card-header py-3 bg-success text-white">
+                <h6 class="m-0 font-weight-bold">
+                    <i class="fas fa-save"></i> Tạo Backup Mới
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Tên file backup (tùy chọn)</label>
+                    <input type="text" id="backupName" class="form-control" placeholder="Để trống sẽ tự động đặt tên... ">
+                    <small class="text-muted">Ví dụ: Backup_20241215</small>
+                </div>
+                <button type="button" class="btn btn-success w-100" onclick="thucHienBackup()">
+                    <i class="fas fa-save"></i> Tạo Backup Ngay
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-6 mb-3">
+        <div class="card shadow">
+            <div class="card-header py-3 bg-warning text-white">
+                <h6 class="m-0 font-weight-bold">
+                    <i class="fas fa-upload"></i> Upload Backup
+                </h6>
+            </div>
+            <div class="card-body">
+                <form id="uploadForm" enctype="multipart/form-data">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Chọn file backup (. bak)</label>
+                        <input type="file" id="backupFile" name="backupFile" class="form-control" accept=".bak">
+                    </div>
+                    <button type="button" class="btn btn-warning w-100" onclick="uploadBackup()">
+                        <i class="fas fa-upload"></i> Upload File
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Backup Files List -->
+<div class="card shadow">
+    <div class="card-header py-3">
+        @{
+            var backupFiles = ViewBag.BackupFiles as List<dynamic>;
+            var soLuongBackup = backupFiles != null ? backupFiles.Count : 0;
+        }
+        <h6 class="m-0 font-weight-bold text-primary">
+            <i class="fas fa-list"></i> Danh sách Backup có sẵn
+            <span class="badge bg-primary">@soLuongBackup</span>
+        </h6>
+    </div>
+    <div class="card-body">
+        @if (backupFiles != null && backupFiles.Count > 0)
+        {
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th>STT</th>
+                            <th>Tên file</th>
+                            <th>Kích thước (MB)</th>
+                            <th>Ngày tạo</th>
+                            <th width="200">Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @{
+                            var stt = 1;
+                        }
+                        @foreach (var file in backupFiles)
+                        {
+                            <tr>
+                                <td>@stt</td>
+                                <td>
+                                    <i class="fas fa-file-archive text-primary"></i>
+                                    <strong>@file.FileName</strong>
+                                </td>
+                                <td>@file. FileSize MB</td>
+                                <td>@file.CreatedDate.ToString("dd/MM/yyyy HH:mm:ss")</td>
+                                <td>
+                                    <button class="btn btn-sm btn-primary" onclick="downloadBackup('@file.FileName')" title="Download">
+                                        <i class="fas fa-download"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-info" onclick="restoreBackup('@file.FileName')" title="Restore">
+                                        <i class="fas fa-undo"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-danger" onclick="xoaBackup('@file.FileName')" title="Xóa">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                            stt++;
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else
+        {
+            <div class="text-center text-muted py-5">
+                <i class="fas fa-folder-open fa-4x mb-3 d-block"></i>
+                <h5>Chưa có file backup nào</h5>
+                <p class="mb-0">Tạo backup đầu tiên để bắt đầu</p>
+            </div>
+        }
+    </div>
+</div>
+
+<!-- Alert Container -->
+<div id="alertContainer" class="position-fixed top-0 end-0 p-3" style="z-index: 9999;"></div>
+
+@section scripts {
+    <script src="https://cdn.jsdelivr. net/npm/sweetalert2@11"></script>
+    <script>
+        function showAlert(message, type) {
+            var alertClass = type === 'success' ?  'alert-success' : 'alert-danger';
+            var iconClass = type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle';
+
+            var alert = `
+                <div class="alert ${alertClass} alert-dismissible fade show" role="alert">
+                    <i class="fas ${iconClass}"></i> ${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>`;
+
+            $('#alertContainer'). html(alert);
+
+            setTimeout(function() {
+                $('#alertContainer .alert').fadeOut();
+            }, 5000);
+        }
+
+        function showLoading(message) {
+            Swal.fire({
+                title: 'Đang xử lý...',
+                text: message,
+                allowOutsideClick: false,
+                showConfirmButton: false,
+                willOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+        }
+
+        function thucHienBackup() {
+            var backupName = $('#backupName').val(). trim();
+
+            Swal.fire({
+                title: 'Xác nhận backup? ',
+                text: 'Quá trình này có thể mất vài phút.',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: 'Backup ngay',
+                cancelButtonText: 'Hủy'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    showLoading('Đang backup database...');
+
+                    $.ajax({
+                        url: '@Url.Action("ThucHienBackup", "Admin")',
+                        type: 'POST',
+                        data: { backupName: backupName },
+                        success: function(result) {
+                            Swal.close();
+                            if (result.success) {
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Thành công!',
+                                    text: result.message,
+                                    confirmButtonText: 'OK'
+                                }).then(() => {
+                                    location.reload();
+                                });
+                            } else {
+                                Swal.fire('Lỗi! ', result.message, 'error');
+                            }
+                        },
+                        error: function() {
+                            Swal. close();
+                            Swal.fire('Lỗi!', 'Có lỗi xảy ra khi backup! ', 'error');
+                        }
+                    });
+                }
+            });
+        }
+
+        function restoreBackup(fileName) {
+            Swal.fire({
+                title: 'Cảnh báo!',
+                html: `Bạn có chắc muốn restore database từ file:<br><strong>${fileName}</strong>? <br><br>
+                       <span class="text-danger">⚠️ Dữ liệu hiện tại sẽ bị ghi đè!</span>`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Restore ngay',
+                cancelButtonText: 'Hủy'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    showLoading('Đang restore database...');
+
+                    $.ajax({
+                        url: '@Url.Action("ThucHienRestore", "Admin")',
+                        type: 'POST',
+                        data: { fileName: fileName },
+                        success: function(result) {
+                            Swal.close();
+                            if (result.success) {
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Thành công!',
+                                    text: result.message,
+                                    confirmButtonText: 'OK'
+                                }).then(() => {
+                                    location.reload();
+                                });
+                            } else {
+                                Swal.fire('Lỗi!', result.message, 'error');
+                            }
+                        },
+                        error: function() {
+                            Swal.close();
+                            Swal.fire('Lỗi!', 'Có lỗi xảy ra khi restore! ', 'error');
+                        }
+                    });
+                }
+            });
+        }
+
+        function xoaBackup(fileName) {
+            Swal. fire({
+                title: 'Xóa file backup?',
+                text: `File: ${fileName}`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                confirmButtonText: 'Xóa',
+                cancelButtonText: 'Hủy'
+            }). then((result) => {
+                if (result.isConfirmed) {
+                    $. ajax({
+                        url: '@Url.Action("XoaBackup", "Admin")',
+                        type: 'POST',
+                        data: { fileName: fileName },
+                        success: function(result) {
+                            if (result.success) {
+                                Swal.fire('Đã xóa!', result.message, 'success'). then(() => {
+                                    location.reload();
+                                });
+                            } else {
+                                Swal.fire('Lỗi!', result. message, 'error');
+                            }
+                        },
+                        error: function() {
+                            Swal.fire('Lỗi!', 'Có lỗi xảy ra! ', 'error');
+                        }
+                    });
+                }
+            });
+        }
+
+        function downloadBackup(fileName) {
+            window.location.href = '@Url.Action("DownloadBackup", "Admin")?fileName=' + encodeURIComponent(fileName);
+        }
+
+        function uploadBackup() {
+            var fileInput = $('#backupFile')[0];
+
+            if (fileInput.files. length === 0) {
+                Swal.fire('Lỗi!', 'Vui lòng chọn file backup!', 'warning');
+                return;
+            }
+
+            var formData = new FormData();
+            formData.append('backupFile', fileInput.files[0]);
+
+            showLoading('Đang upload file.. .');
+
+            $.ajax({
+                url: '@Url.Action("UploadBackup", "Admin")',
+                type: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                success: function(result) {
+                    Swal.close();
+                    if (result.success) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Thành công!',
+                            text: result.message
+                        }).then(() => {
+                            location.reload();
+                        });
+                    } else {
+                        Swal.fire('Lỗi!', result.message, 'error');
+                    }
+                },
+                error: function() {
+                    Swal.close();
+                    Swal.fire('Lỗi!', 'Có lỗi xảy ra khi upload!', 'error');
+                }
+            });
+        }
+    </script>
+}

@@ -1,0 +1,179 @@
+﻿@model List<QL_Kho.Models.NGUOIDUNG>
+@{
+    ViewBag.Title = "Quản lý người dùng";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <h1 class="h3 mb-0 text-gray-800">
+        <i class="fas fa-users text-primary"></i> Quản lý người dùng
+    </h1>
+</div>
+
+<!-- Filters -->
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">
+            <i class="fas fa-filter"></i> Tìm kiếm & Lọc
+        </h6>
+    </div>
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-6">
+                <label class="form-label">Tìm kiếm</label>
+                <input type="text" name="search" class="form-control" placeholder="Tên hoặc email..." value="@ViewBag.Search">
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Vai trò</label>
+                <select name="role" class="form-control">
+                    <option value="">-- Tất cả --</option>
+                    <option value="admin" @(ViewBag.Role == "admin" ? "selected" : "")>Admin</option>
+                    <option value="quanly" @(ViewBag.Role == "quanly" ? "selected" : "")>Quản lý</option>
+                    <option value="khach" @(ViewBag.Role == "khach" ? "selected" : "")>Khách hàng</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">&nbsp;</label>
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="fas fa-search"></i> Tìm
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Users Table -->
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">
+            Danh sách người dùng <span class="badge bg-primary">@Model.Count</span>
+        </h6>
+    </div>
+    <div class="card-body">
+        @if (TempData["Success"] != null)
+        {
+            <div class="alert alert-success alert-dismissible fade show">
+                <i class="fas fa-check-circle"></i> @TempData["Success"]
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        }
+
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover" id="dataTable">
+                <thead class="table-light">
+                    <tr>
+                        <th>Mã User</th>
+                        <th>Tên người dùng</th>
+                        <th>Email</th>
+                        <th>SĐT</th>
+                        <th>Vai trò</th>
+                        <th>Trạng thái</th>
+                        <th>Ngày tạo</th>
+                        <th width="120">Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model != null && Model.Any())
+                    {
+                        foreach (var item in Model)
+                        {
+                            <tr>
+                                <td><strong>@item.MaUser.Trim()</strong></td>
+                                <td>@item.TenNguoiDung</td>
+                                <td>@item.Email</td>
+                                <td>@item.SDT</td>
+                                <td>
+                                    @switch (item.Role)
+                                    {
+                                        case "admin":
+                                            <span class="badge bg-danger">Admin</span>
+                                            break;
+                                        case "quanly":
+                                            <span class="badge bg-warning">Quản lý</span>
+                                            break;
+                                        default:
+                                            <span class="badge bg-info">Khách hàng</span>
+                                            break;
+                                    }
+                                </td>
+                                <td>
+                                    @if (item.TrangThai == "HoatDong")
+                                    {
+                                        <span class="badge bg-success">Hoạt động</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary">Không hoạt động</span>
+                                    }
+                                </td>
+                                <td>@(item.NgayTao?.ToString("dd/MM/yyyy") ?? "N/A")</td>
+                                <td>
+                                    <a href="@Url.Action("SuaNguoiDung", "Admin", new { id = item. MaUser.Trim() })"
+                                       class="btn btn-sm btn-warning"
+                                       title="Sửa">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    @if (item.Role != "admin")
+                                    {
+                                        <button type="button"
+                                                class="btn btn-sm btn-danger btn-delete"
+                                                data-id="@item.MaUser.Trim()"
+                                                data-name="@item.TenNguoiDung"
+                                                title="Vô hiệu hóa">
+                                            <i class="fas fa-ban"></i>
+                                        </button>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="8" class="text-center text-muted py-4">
+                                <i class="fas fa-inbox fa-3x mb-3 d-block"></i>
+                                <p class="mb-0">Không tìm thấy người dùng nào</p>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@section scripts {
+    <script>
+        $(document).ready(function() {
+            $('#dataTable').DataTable({
+                "language": {
+                    "url": "//cdn.datatables.net/plug-ins/1.13.7/i18n/vi.json"
+                }
+            });
+
+            $('. btn-delete').click(function() {
+                var maUser = $(this).data('id');
+                var tenUser = $(this).data('name');
+
+                if (confirm('Bạn có chắc muốn vô hiệu hóa người dùng "' + tenUser + '"?')) {
+                    $.ajax({
+                        url: '@Url.Action("XoaNguoiDung", "Admin")',
+                        type: 'POST',
+                        data: { maUser: maUser },
+                        success: function(result) {
+                            if (result.success) {
+                                alert(result.message);
+                                location.reload();
+                            } else {
+                                alert(result.message);
+                            }
+                        },
+                        error: function() {
+                            alert('Có lỗi xảy ra!');
+                        }
+                    });
+                }
+            });
+        });
+    </script>
+}

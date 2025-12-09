@@ -151,13 +151,15 @@
     <Compile Include="Models\NHACUNGCAP.cs" />
     <Compile Include="Models\PHIEUNHAP.cs" />
     <Compile Include="Models\SANPHAM.cs" />
+    <Compile Include="Models\ViewModels\AccountViewModels.cs" />
+    <Compile Include="Models\ViewModels\AdminViewModels.cs" />
     <Compile Include="Models\ViewModels\CartViewModel.cs" />
     <Compile Include="Models\ViewModels\CheckoutViewModel.cs" />
-    <Compile Include="Models\ViewModels\ChiTietDonHangViewModel.cs" />
     <Compile Include="Models\ViewModels\ReportViewModel.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="Content\AdminDashboard.css" />
     <Content Include="Content\bootstrap-grid.css" />
     <Content Include="Content\bootstrap-grid.min.css" />
     <Content Include="Content\bootstrap-grid.rtl.css" />
@@ -248,6 +250,8 @@
     <Content Include="Content\images\xiaomi-redmi-13c.jpg" />
     <Content Include="Content\images\xiaomi-redmi-note-13-pro.jpg" />
     <Content Include="Content\images\xiaomi-redmi-note-13.jpg" />
+    <Content Include="Content\modern-home.css" />
+    <Content Include="Content\modern-layout.css" />
     <Content Include="Content\promo.css" />
     <Content Include="favicon.ico" />
     <Content Include="Global.asax" />
@@ -268,6 +272,7 @@
     <Content Include="Scripts\jquery.validate.min.js" />
     <Content Include="Scripts\jquery.validate.unobtrusive.js" />
     <Content Include="Scripts\jquery.validate.unobtrusive.min.js" />
+    <Content Include="Scripts\modern-site.js" />
     <Content Include="Scripts\modernizr-2.8.3.js" />
     <Content Include="Scripts\site.js" />
     <Content Include="Web.config" />
@@ -299,9 +304,24 @@
     <Content Include="Views\Account\ChiTietDonHang.cshtml" />
     <Content Include="Views\Admin\Dashboard.cshtml" />
     <Content Include="Views\Admin\Index.cshtml" />
+    <Content Include="Views\Admin\QuanLySanPham.cshtml" />
+    <Content Include="Views\Admin\ThemSanPham.cshtml" />
+    <Content Include="Views\Admin\SuaSanPham.cshtml" />
+    <Content Include="Views\Admin\QuanLyDanhMuc.cshtml" />
+    <Content Include="Views\Admin\ThemDanhMuc.cshtml" />
+    <Content Include="Views\Admin\SuaDanhMuc.cshtml" />
+    <Content Include="Views\Admin\QuanLyNhaCungCap.cshtml" />
+    <Content Include="Views\Admin\ThemNhaCungCap.cshtml" />
+    <Content Include="Views\Admin\SuaNhaCungCap.cshtml" />
+    <Content Include="Views\Admin\QuanLyDonHang.cshtml" />
+    <Content Include="Views\Admin\ChiTietDonHang.cshtml" />
+    <Content Include="Views\Admin\QuanLyNguoiDung.cshtml" />
+    <Content Include="Views\Admin\SuaNguoiDung.cshtml" />
+    <Content Include="Views\Admin\BaoCaoDoanhThu.cshtml" />
+    <Content Include="Views\Admin\BackupDatabase.cshtml" />
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="App_Data\" />
+    <Folder Include="App_Data\Backups\" />
     <Folder Include="Views\Report\" />
   </ItemGroup>
   <ItemGroup>
@@ -349,7 +369,7 @@
           <AutoAssignPort>True</AutoAssignPort>
           <DevelopmentServerPort>50997</DevelopmentServerPort>
           <DevelopmentServerVPath>/</DevelopmentServerVPath>
-          <IISUrl>https://localhost:44386/</IISUrl>
+          <IISUrl>http://localhost:50997/</IISUrl>
           <NTLMAuthentication>False</NTLMAuthentication>
           <UseCustomServer>False</UseCustomServer>
           <CustomServerUrl>

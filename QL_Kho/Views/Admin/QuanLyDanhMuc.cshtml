@@ -1,0 +1,111 @@
+﻿@model List<QL_Kho.Models.DANHMUC>
+@{
+    ViewBag.Title = "Quản lý danh mục";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <h1 class="h3 mb-0 text-gray-800">
+        <i class="fas fa-list text-primary"></i> Quản lý danh mục
+    </h1>
+    <a href="@Url.Action("ThemDanhMuc", "Admin")" class="btn btn-primary shadow-sm">
+        <i class="fas fa-plus fa-sm"></i> Thêm danh mục
+    </a>
+</div>
+
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">
+            Danh sách danh mục <span class="badge bg-primary">@Model.Count</span>
+        </h6>
+    </div>
+    <div class="card-body">
+        @if (TempData["Success"] != null)
+        {
+            <div class="alert alert-success alert-dismissible fade show">
+                <i class="fas fa-check-circle"></i> @TempData["Success"]
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        }
+
+        <div class="row">
+            @if (Model != null && Model.Any())
+            {
+                foreach (var item in Model)
+                {
+                    <div class="col-md-6 col-lg-4 mb-4">
+                        <div class="card h-100 shadow-sm">
+                            <img src="@(! string.IsNullOrEmpty(item.HinhAnh) ?  Url.Content("~/Content/images/" + item.HinhAnh) : "https://via.placeholder.com/300x200")"
+                                 class="card-img-top"
+                                 alt="@item.TenDM"
+                                 style="height: 200px; object-fit: cover;">
+                            <div class="card-body">
+                                <h5 class="card-title">@item.TenDM</h5>
+                                <p class="card-text text-muted">@item.MoTa</p>
+                                <p class="card-text">
+                                    <small class="text-muted">
+                                        <i class="fas fa-box"></i> Số sản phẩm:
+                                        <strong>@(item.SANPHAMs?. Count(sp => sp.TrangThai == "HoatDong") ?? 0)</strong>
+                                    </small>
+                                </p>
+                                @if (item.TrangThai == "HoatDong")
+                                {
+                                    <span class="badge bg-success">Hoạt động</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary">Không hoạt động</span>
+                                }
+                            </div>
+                            <div class="card-footer bg-white">
+                                <a href="@Url.Action("SuaDanhMuc", "Admin", new { id = item.MaDM.Trim() })" class="btn btn-sm btn-warning">
+                                    <i class="fas fa-edit"></i> Sửa
+                                </a>
+                                <button type="button" class="btn btn-sm btn-danger btn-delete" data-id="@item.MaDM" data-name="@item.TenDM">
+                                    <i class="fas fa-trash"></i> Xóa
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                }
+            }
+            else
+            {
+                <div class="col-12 text-center text-muted py-5">
+                    <i class="fas fa-inbox fa-4x mb-3 d-block"></i>
+                    <p class="mb-0">Chưa có danh mục nào</p>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@section scripts {
+    <script>
+        $(document).ready(function() {
+            $('. btn-delete').click(function() {
+                var maDM = $(this).data('id');
+                var tenDM = $(this).data('name');
+
+                if (confirm('Bạn có chắc muốn xóa danh mục "' + tenDM + '"? ')) {
+                    $.ajax({
+                        url: '@Url.Action("XoaDanhMuc", "Admin")',
+                        type: 'POST',
+                        data: { maDM: maDM },
+                        success: function(result) {
+                            if (result. success) {
+                                alert(result.message);
+                                location.reload();
+                            } else {
+                                alert(result. message);
+                            }
+                        },
+                        error: function() {
+                            alert('Có lỗi xảy ra! ');
+                        }
+                    });
+                }
+            });
+        });
+    </script>
+}

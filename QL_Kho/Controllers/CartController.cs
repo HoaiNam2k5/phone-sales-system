@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Data.SqlClient;
 using System.Linq;
 using System.Web.Mvc;
 using QL_Kho.Models;
@@ -79,7 +80,7 @@ namespace QL_Kho.Controllers
                         MaUser = userId,
                         MaSP = maSP,
                         SoLuong = soLuong,
-                        DonGia = sanPham.DonGia ?? 0,  
+                        DonGia = sanPham.DonGia ?? 0,
                         NgayThem = DateTime.Now
                     };
                     db.GIOHANGs.Add(gioHang);
@@ -100,6 +101,7 @@ namespace QL_Kho.Controllers
                 return Json(new { success = false, message = "Lỗi: " + ex.Message });
             }
         }
+
         // GET: Cart/OrderSuccess
         public ActionResult OrderSuccess(string maDH)
         {
@@ -123,6 +125,7 @@ namespace QL_Kho.Controllers
             ViewBag.MaDH = maDH;
             return View();
         }
+
         // POST: Cart/UpdateCart
         [HttpPost]
         public JsonResult UpdateCart(int maGH, int soLuong)
@@ -264,20 +267,41 @@ namespace QL_Kho.Controllers
                     return Json(new { success = false, message = "Giỏ hàng trống" });
                 }
 
-                // Kiểm tra tồn kho
+              
                 foreach (var item in cartItems)
                 {
-                    var sp = db.SANPHAMs.Find(item.MaSP);
-                    if (sp.SoLuongTon < item.SoLuong)
+                    try
                     {
-                        return Json(new { success = false, message = $"Sản phẩm {sp.TenSP} không đủ hàng" });
+                        var param1 = new SqlParameter("@MaUser", userId);
+                        var param2 = new SqlParameter("@MaSP", item.MaSP.Trim());
+                        var param3 = new SqlParameter("@SoLuong", item.SoLuong);
+
+                        // GỌI STORED PROCEDURE AN TOÀN
+                        db.Database.ExecuteSqlCommand(
+                            "EXEC sp_MuaHangAnToan @MaUser, @MaSP, @SoLuong",
+                            param1, param2, param3
+                        );
+                    }
+                    catch (SqlException ex)
+                    {
+                        // Xử lý lỗi hết hàng từ SP
+                        if (ex.Message.Contains("Hết hàng"))
+                        {
+                            var sanPham = db.SANPHAMs.Find(item.MaSP.Trim());
+                            return Json(new
+                            {
+                                success = false,
+                                message = $"Sản phẩm '{sanPham?.TenSP}' đã hết hàng!"
+                            });
+                        }
+                        throw; // Ném lại exception khác
                     }
                 }
 
-                // Tạo đơn hàng
+              
                 var tongTien = cartItems.Sum(x => x.SoLuong * x.DonGia);
 
-                // Tạo mã đơn hàng thủ công (vì trigger không hoạt động từ EF)
+                // Tạo mã đơn hàng
                 var maxMaDH = db.DONHANGs
                     .OrderByDescending(d => d.MaDH)
                     .Select(d => d.MaDH)
@@ -307,7 +331,7 @@ namespace QL_Kho.Controllers
                 db.DONHANGs.Add(donHang);
                 db.SaveChanges();
 
-                // Thêm chi tiết đơn hàng
+                // ✅ BƯỚC 3: THÊM CHI TIẾT ĐƠN HÀNG
                 foreach (var item in cartItems)
                 {
                     var chiTiet = new CHITIETDONHANG
@@ -315,27 +339,30 @@ namespace QL_Kho.Controllers
                         MaDH = maDH,
                         MaSP = item.MaSP,
                         SoLuong = item.SoLuong,
-                        DonGia = item.DonGia
+                        DonGia = item.DonGia,
+                        ThanhTien = item.SoLuong * item.DonGia
                     };
                     db.CHITIETDONHANGs.Add(chiTiet);
+                }
 
-                    // Giảm tồn kho
-                    var sp = db.SANPHAMs.Find(item.MaSP);
-                    sp.SoLuongTon -= item.SoLuong;
-                    if (sp.SoLuongTon <= 0)
+                db.SaveChanges();
+
+                foreach (var item in cartItems)
+                {
+                    var sp = db.SANPHAMs.Find(item.MaSP.Trim());
+                    if (sp != null && sp.SoLuongTon <= 0)
                     {
                         sp.TrangThai = "HetHang";
                     }
                 }
 
-                // Xóa giỏ hàng
+             
                 db.GIOHANGs.RemoveRange(cartItems);
-
                 db.SaveChanges();
 
                 Session["CartCount"] = 0;
 
-                TempData["Success"] = "Đặt hàng thành công!  Mã đơn hàng: " + maDH;
+                TempData["Success"] = "Đặt hàng thành công! Mã đơn hàng: " + maDH;
                 return Json(new { success = true, maDH = maDH });
             }
             catch (Exception ex)
