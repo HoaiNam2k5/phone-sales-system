@@ -181,7 +181,7 @@ namespace QL_Kho.Controllers
             return View(model);
         }
 
-        // ✅ POST: Account/ThongTinCaNhan (THÊM MỚI)
+        //  POST: Account/ThongTinCaNhan (THÊM MỚI)
         [HttpPost]
         [ValidateAntiForgeryToken]
         public ActionResult ThongTinCaNhan(ThongTinCaNhanViewModel model)
@@ -250,7 +250,7 @@ namespace QL_Kho.Controllers
             return View();
         }
 
-        // ✅ POST: Account/DoiMatKhau (THÊM MỚI)
+        //  POST: Account/DoiMatKhau (THÊM MỚI)
         [HttpPost]
         [ValidateAntiForgeryToken]
         public ActionResult DoiMatKhau(DoiMatKhauViewModel model)

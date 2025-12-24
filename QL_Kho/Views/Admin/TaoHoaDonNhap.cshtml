@@ -1,0 +1,347 @@
+﻿@{
+    ViewBag.Title = "Tạo hóa đơn nhập";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <h1 class="h3 mb-0 text-gray-800">
+        <i class="fas fa-plus-circle text-primary"></i> Tạo hóa đơn nhập
+    </h1>
+    <a href="@Url.Action("QuanLyNhapKho", "Admin")" class="btn btn-secondary shadow-sm">
+        <i class="fas fa-arrow-left"></i> Quay lại
+    </a>
+</div>
+
+@if (ViewBag.Error != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show">
+        <i class="fas fa-exclamation-circle"></i> @ViewBag.Error
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<form method="post" action="@Url.Action("TaoHoaDonNhap", "Admin")" id="formTaoHoaDon">
+    @Html.AntiForgeryToken()
+
+    <input type="hidden" name="chiTietJson" id="chiTietJson" />
+
+    <div class="row">
+        <!-- Thông tin hóa đơn -->
+        <div class="col-lg-4 mb-4">
+            <div class="card shadow">
+                <div class="card-header py-3 bg-primary text-white">
+                    <h6 class="m-0 font-weight-bold">
+                        <i class="fas fa-info-circle"></i> Thông tin hóa đơn
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">
+                            Nhà cung cấp <span class="text-danger">*</span>
+                        </label>
+                        <select name="maNCC" id="maNCC" class="form-select" required>
+                            <option value="">-- Chọn nhà cung cấp --</option>
+                            @foreach (var ncc in ViewBag.NhaCungCap as SelectList)
+                            {
+                                <option value="@ncc.Value">@ncc.Text</option>
+                            }
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Ghi chú</label>
+                        <textarea name="ghiChu" class="form-control" rows="3"
+                                  placeholder="Nhập ghi chú (nếu có)..."></textarea>
+                    </div>
+
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i>
+                        <strong>Lưu ý:</strong> Vui lòng chọn nhà cung cấp và thêm ít nhất 1 sản phẩm.
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tổng tiền -->
+            <div class="card shadow mt-3">
+                <div class="card-header py-3 bg-success text-white">
+                    <h6 class="m-0 font-weight-bold">
+                        <i class="fas fa-calculator"></i> Tổng tiền
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <h3 class="text-success mb-0" id="tongTienDisplay">0 ₫</h3>
+                    <small class="text-muted">Tổng:  <span id="tongSoLuong">0</span> sản phẩm</small>
+                </div>
+            </div>
+        </div>
+
+        <!-- Danh sách sản phẩm -->
+        <div class="col-lg-8 mb-4">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-box"></i> Chọn sản phẩm nhập
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <!-- Form thêm sản phẩm -->
+                    <div class="row mb-4 p-3 bg-light rounded">
+                        <div class="col-md-5">
+                            <label class="form-label fw-bold">Sản phẩm</label>
+                            <select id="sanPhamSelect" class="form-select">
+                                <option value="">-- Chọn sản phẩm --</option>
+                                @foreach (var sp in ViewBag.SanPham as List<QL_Kho.Models.SANPHAM>)
+                                {
+                                    <option value="@sp.MaSP.Trim()"
+                                            data-ten="@sp.TenSP"
+                                            data-hinh="@sp.HinhAnh">
+                                        @sp.TenSP
+                                    </option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-bold">Số lượng</label>
+                            <input type="number" id="soLuongInput" class="form-control"
+                                   value="1" min="1" placeholder="Số lượng">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-bold">Đơn giá nhập</label>
+                            <input type="number" id="donGiaInput" class="form-control"
+                                   value="0" min="0" step="1000" placeholder="Đơn giá">
+                        </div>
+                        <div class="col-md-1">
+                            <label class="form-label">&nbsp;</label>
+                            <button type="button" class="btn btn-primary w-100" onclick="themSanPham()">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Bảng sản phẩm đã chọn -->
+                    <div class="table-responsive">
+                        <table class="table table-bordered" id="tableSanPham">
+                            <thead class="table-light">
+                                <tr>
+                                    <th width="50">STT</th>
+                                    <th>Sản phẩm</th>
+                                    <th width="100">Số lượng</th>
+                                    <th width="150">Đơn giá</th>
+                                    <th width="150">Thành tiền</th>
+                                    <th width="80">Xóa</th>
+                                </tr>
+                            </thead>
+                            <tbody id="danhSachSanPham">
+                                <tr id="emptyRow">
+                                    <td colspan="6" class="text-center text-muted">
+                                        <i class="fas fa-inbox fa-3x mb-2"></i>
+                                        <p>Chưa có sản phẩm nào</p>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Nút submit -->
+            <div class="text-end mt-3">
+                <button type="submit" class="btn btn-success btn-lg">
+                    <i class="fas fa-save"></i> Tạo hóa đơn nhập
+                </button>
+            </div>
+        </div>
+    </div>
+</form>
+
+@section scripts {
+    <script>
+        // ==========================================
+        // BIẾN TOÀN CỤC
+        // ==========================================
+        var danhSachSP = [];
+
+        // ==========================================
+        // HÀM THÊM SẢN PHẨM
+        // ==========================================
+        function themSanPham() {
+            console.log('=== BẮT ĐẦU THÊM SẢN PHẨM ===');
+
+            // Lấy element
+            var selectElement = document.getElementById('sanPhamSelect');
+            var soLuongElement = document.getElementById('soLuongInput');
+            var donGiaElement = document.getElementById('donGiaInput');
+
+            // Lấy giá trị
+            var maSP = selectElement.value;
+            var selectedOption = selectElement.options[selectElement.selectedIndex];
+            var tenSP = selectedOption.getAttribute('data-ten');
+            var hinhAnh = selectedOption.getAttribute('data-hinh') || '';
+            var soLuong = parseInt(soLuongElement.value);
+            var donGia = parseInt(donGiaElement.value);
+
+            console.log('Mã SP:', maSP);
+            console.log('Tên SP:', tenSP);
+            console.log('Số lượng:', soLuong);
+            console.log('Đơn giá:', donGia);
+
+            // Validate
+            if (!maSP || maSP === '') {
+                alert('Vui lòng chọn sản phẩm!');
+                return;
+            }
+
+            if (isNaN(soLuong) || soLuong <= 0) {
+                alert('Số lượng phải lớn hơn 0!');
+                return;
+            }
+
+            if (isNaN(donGia) || donGia <= 0) {
+                alert('Đơn giá phải lớn hơn 0!');
+                return;
+            }
+
+            // Kiểm tra trùng
+            var existed = false;
+            for (var i = 0; i < danhSachSP.length; i++) {
+                if (danhSachSP[i].MaSP === maSP) {
+                    danhSachSP[i].SoLuong += soLuong;
+                    danhSachSP[i].DonGiaNhap = donGia;
+                    existed = true;
+                    console.log('Cập nhật sản phẩm đã có');
+                    break;
+                }
+            }
+
+            if (!existed) {
+                danhSachSP.push({
+                    MaSP: maSP,
+                    TenSP: tenSP,
+                    HinhAnh: hinhAnh,
+                    SoLuong: soLuong,
+                    DonGiaNhap: donGia
+                });
+                console.log('Thêm sản phẩm mới');
+            }
+
+            console.log('Danh sách hiện tại:', danhSachSP);
+
+            // Hiển thị lại
+            hienThiDanhSach();
+
+            // Reset form
+            selectElement.value = '';
+            soLuongElement.value = '1';
+            donGiaElement.value = '0';
+
+            alert('Đã thêm sản phẩm thành công!');
+        }
+
+        // ==========================================
+        // HÀM XÓA SẢN PHẨM
+        // ==========================================
+        function xoaSanPham(maSP) {
+            console.log('Xóa sản phẩm:', maSP);
+
+            if (confirm('Bạn có chắc muốn xóa sản phẩm này?')) {
+                var newList = [];
+                for (var i = 0; i < danhSachSP.length; i++) {
+                    if (danhSachSP[i].MaSP !== maSP) {
+                        newList.push(danhSachSP[i]);
+                    }
+                }
+                danhSachSP = newList;
+                hienThiDanhSach();
+            }
+        }
+
+        // ==========================================
+        // HÀM HIỂN THỊ DANH SÁCH
+        // ==========================================
+        function hienThiDanhSach() {
+            console.log('=== HIỂN THỊ DANH SÁCH ===');
+            console.log('Số sản phẩm:', danhSachSP.length);
+
+            var tbody = document.getElementById('danhSachSanPham');
+            var html = '';
+            var tongTien = 0;
+            var tongSL = 0;
+
+            if (danhSachSP.length === 0) {
+                html = '<tr id="emptyRow">' +
+                    '<td colspan="6" class="text-center text-muted py-4">' +
+                    '<i class="fas fa-inbox fa-3x mb-2"></i>' +
+                    '<p>Chưa có sản phẩm nào</p>' +
+                    '</td>' +
+                    '</tr>';
+            } else {
+                for (var i = 0; i < danhSachSP.length; i++) {
+                    var item = danhSachSP[i];
+                    var thanhTien = item.SoLuong * item.DonGiaNhap;
+                    tongTien += thanhTien;
+                    tongSL += item.SoLuong;
+
+                    html += '<tr>' +
+                        '<td class="text-center">' + (i + 1) + '</td>' +
+                        '<td>' +
+                        '<strong>' + item.TenSP + '</strong><br>' +
+                        '<small class="text-muted">Mã:  ' + item.MaSP + '</small>' +
+                        '</td>' +
+                        '<td class="text-center">' + item.SoLuong + '</td>' +
+                        '<td class="text-end">' + formatNumber(item.DonGiaNhap) + ' ₫</td>' +
+                        '<td class="text-end">' +
+                        '<strong class="text-success">' + formatNumber(thanhTien) + ' ₫</strong>' +
+                        '</td>' +
+                        '<td class="text-center">' +
+                        '<button type="button" class="btn btn-sm btn-danger" onclick="xoaSanPham(\'' + item.MaSP + '\')">' +
+                        '<i class="fas fa-trash"></i>' +
+                        '</button>' +
+                        '</td>' +
+                        '</tr>';
+                }
+            }
+
+            tbody.innerHTML = html;
+
+            // Cập nhật tổng
+            document.getElementById('tongTienDisplay').textContent = formatNumber(tongTien) + ' ₫';
+            document.getElementById('tongSoLuong').textContent = tongSL;
+
+            console.log('Tổng tiền:', tongTien);
+            console.log('Tổng số lượng:', tongSL);
+        }
+
+        // ==========================================
+        // HÀM FORMAT SỐ
+        // ==========================================
+        function formatNumber(num) {
+            return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+        }
+
+        // ==========================================
+        // XỬ LÝ SUBMIT FORM
+        // ==========================================
+        document.addEventListener('DOMContentLoaded', function () {
+            console.log('✅ Trang đã load xong');
+
+            var form = document.getElementById('formTaoHoaDon');
+
+            form.addEventListener('submit', function (e) {
+                console.log('Submit form.. .');
+
+                if (danhSachSP.length === 0) {
+                    e.preventDefault();
+                    alert('Vui lòng thêm ít nhất 1 sản phẩm! ');
+                    return false;
+                }
+
+                // Lưu JSON vào hidden input
+                var jsonData = JSON.stringify(danhSachSP);
+                document.getElementById('chiTietJson').value = jsonData;
+
+                console.log('Dữ liệu gửi đi:', jsonData);
+                return true;
+            });
+        });
+    </script>
+}

@@ -845,6 +845,469 @@ namespace QL_Kho.Controllers
             }
         }
 
+        // GET: Admin/QuanLyNhapKho
+        public ActionResult QuanLyNhapKho(string search = "", string status = "", string fromDate = "", string toDate = "")
+        {
+            try
+            {
+                var query = from hdn in db.HOADONNHAPHANGs
+                            join ncc in db.NHACUNGCAPs on hdn.MaNCC.Trim() equals ncc.MaNCC.Trim()
+                            join user in db.NGUOIDUNGs on hdn.MaQL.Trim() equals user.MaUser.Trim()
+                            select new HoaDonNhapViewModel
+                            {
+                                MaHDN = hdn.MaHDN,
+                                MaNCC = hdn.MaNCC,
+                                TenNCC = ncc.TenNCC,
+                                MaNguoiTao = hdn.MaQL,
+                                TenNguoiTao = user.TenNguoiDung,
+                                NgayNhap = hdn.NgayNhap, // ✅ ĐÚNG - Không cần . HasValue
+                                TongTien = hdn.TongTien,
+                                TrangThai = hdn.TrangThai,
+                                SoLuongSanPham = db.PHIEUNHAPs.Count(p => p.MaHDN.Trim() == hdn.MaHDN.Trim())
+                            };
+
+                // Lọc theo search
+                if (!string.IsNullOrEmpty(search))
+                {
+                    search = search.ToLower();
+                    query = query.Where(h =>
+                        h.MaHDN.ToLower().Contains(search) ||
+                        h.TenNCC.ToLower().Contains(search));
+                }
+
+                // Lọc theo trạng thái
+                if (!string.IsNullOrEmpty(status))
+                {
+                    query = query.Where(h => h.TrangThai.Trim() == status);
+                }
+
+                // Lọc theo ngày
+                if (!string.IsNullOrEmpty(fromDate))
+                {
+                    DateTime from = DateTime.Parse(fromDate);
+                    query = query.Where(h => h.NgayNhap >= from);
+                }
+
+                if (!string.IsNullOrEmpty(toDate))
+                {
+                    DateTime to = DateTime.Parse(toDate).AddDays(1);
+                    query = query.Where(h => h.NgayNhap < to);
+                }
+
+                var result = query.OrderByDescending(h => h.NgayNhap).ToList();
+
+                // Thống kê
+                ViewBag.SoChoXacNhan = db.HOADONNHAPHANGs.Count(h => h.TrangThai.Trim() == "ChoXacNhan");
+                ViewBag.SoDaDuyet = db.HOADONNHAPHANGs.Count(h => h.TrangThai.Trim() == "DaDuyet");
+                ViewBag.SoDaHuy = db.HOADONNHAPHANGs.Count(h => h.TrangThai.Trim() == "DaHuy");
+                ViewBag.TongGiaTri = db.HOADONNHAPHANGs
+                    .Where(h => h.TrangThai.Trim() == "DaDuyet")
+                    .Sum(h => (decimal?)h.TongTien) ?? 0;
+
+                // ViewBag cho filter
+                ViewBag.Search = search;
+                ViewBag.Status = status;
+                ViewBag.FromDate = fromDate;
+                ViewBag.ToDate = toDate;
+
+                return View(result);
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = "Lỗi:  " + ex.Message;
+                System.Diagnostics.Debug.WriteLine("❌ LỖI QuanLyNhapKho: " + ex.ToString());
+                return View(new List<HoaDonNhapViewModel>());
+            }
+        }
+        // GET: Admin/TaoHoaDonNhap
+        public ActionResult TaoHoaDonNhap()
+        {
+            ViewBag.NhaCungCap = new SelectList(
+                db.NHACUNGCAPs.Where(ncc => ncc.TrangThai == "HoatDong"),
+                "MaNCC",
+                "TenNCC"
+            );
+
+            ViewBag.SanPham = db.SANPHAMs
+                .Where(sp => sp.TrangThai == "HoatDong")
+                .OrderBy(sp => sp.TenSP)
+                .ToList();
+
+            return View();
+        }
+        // POST: Admin/TaoHoaDonNhap
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public ActionResult TaoHoaDonNhap(string maNCC, string ghiChu, string chiTietJson)
+        {
+            try
+            {
+                var maQL = Session["UserID"]?.ToString();
+
+                // Validate
+                if (string.IsNullOrEmpty(maQL))
+                {
+                    TempData["Error"] = "Phiên đăng nhập hết hạn! ";
+                    return RedirectToAction("Login", "Account");
+                }
+
+                if (string.IsNullOrEmpty(maNCC))
+                {
+                    TempData["Error"] = "Vui lòng chọn nhà cung cấp!";
+                    return RedirectToAction("TaoHoaDonNhap");
+                }
+
+                if (string.IsNullOrEmpty(chiTietJson))
+                {
+                    TempData["Error"] = "Vui lòng thêm ít nhất 1 sản phẩm!";
+                    return RedirectToAction("TaoHoaDonNhap");
+                }
+
+                System.Diagnostics.Debug.WriteLine($"========== TẠO HÓA ĐƠN NHẬP ==========");
+                System.Diagnostics.Debug.WriteLine($"MaNCC: {maNCC.Trim()}");
+                System.Diagnostics.Debug.WriteLine($"MaQL: {maQL.Trim()}");
+
+                // ✅ GỌI SP KHÔNG CÓ OUTPUT - ĐỌC KẾT QUẢ TỪ SELECT
+                var result = db.Database.SqlQuery<SpCreateResult>(
+                    "EXEC SP_TaoHoaDonNhap @MaNCC, @MaQL, @GhiChu",
+                    new SqlParameter("@MaNCC", maNCC.Trim()),
+                    new SqlParameter("@MaQL", maQL.Trim()),
+                    new SqlParameter("@GhiChu", (object)ghiChu ?? DBNull.Value)
+                ).FirstOrDefault();
+
+                if (result == null || result.Success == 0 || string.IsNullOrEmpty(result.MaHDN))
+                {
+                    var errorMsg = result?.Message ?? "Không tạo được hóa đơn";
+                    TempData["Error"] = "Lỗi:  " + errorMsg;
+                    System.Diagnostics.Debug.WriteLine($"❌ Lỗi tạo HDN: {errorMsg}");
+                    return RedirectToAction("TaoHoaDonNhap");
+                }
+
+                string maHDN = result.MaHDN.Trim();
+
+                System.Diagnostics.Debug.WriteLine($"✅ Tạo được MaHDN: {maHDN}");
+
+                // ✅ THÊM CHI TIẾT SẢN PHẨM
+                var chiTiet = Newtonsoft.Json.JsonConvert.DeserializeObject<List<dynamic>>(chiTietJson);
+
+                if (chiTiet != null && chiTiet.Count > 0)
+                {
+                    foreach (var item in chiTiet)
+                    {
+                        string maSP = item.MaSP.ToString().Trim();
+                        int soLuong = (int)item.SoLuong;
+                        decimal donGia = Convert.ToDecimal(item.DonGiaNhap);
+
+                        System.Diagnostics.Debug.WriteLine($"   → Thêm SP: {maSP}, SL: {soLuong}, Giá: {donGia}");
+
+                        var spResult = db.Database.SqlQuery<SpResult>(
+                            "EXEC SP_ThemSanPhamNhap @MaHDN, @MaSP, @SoLuong, @DonGiaNhap",
+                            new SqlParameter("@MaHDN", maHDN),
+                            new SqlParameter("@MaSP", maSP),
+                            new SqlParameter("@SoLuong", soLuong),
+                            new SqlParameter("@DonGiaNhap", donGia)
+                        ).FirstOrDefault();
+
+                        if (spResult == null || spResult.Success == 0)
+                        {
+                            var errMsg = spResult?.Message ?? "Lỗi thêm sản phẩm";
+                            System.Diagnostics.Debug.WriteLine($"   ❌ {errMsg}");
+                            throw new Exception(errMsg);
+                        }
+                    }
+
+                    System.Diagnostics.Debug.WriteLine($"✅ Đã thêm {chiTiet.Count} sản phẩm");
+                }
+
+                TempData["Success"] = $"Tạo hóa đơn nhập {maHDN} thành công!";
+                return RedirectToAction("ChiTietHoaDonNhap", new { id = maHDN });
+            }
+            catch (Exception ex)
+            {
+                var innerMsg = ex.InnerException?.InnerException?.Message ??
+                               ex.InnerException?.Message ??
+                               ex.Message;
+
+                TempData["Error"] = "Lỗi:  " + innerMsg;
+                System.Diagnostics.Debug.WriteLine("❌ LỖI:  " + ex.ToString());
+
+                ViewBag.NhaCungCap = new SelectList(
+                    db.NHACUNGCAPs.Where(ncc => ncc.TrangThai == "HoatDong"),
+                    "MaNCC",
+                    "TenNCC"
+                );
+                ViewBag.SanPham = db.SANPHAMs
+                    .Where(sp => sp.TrangThai == "HoatDong")
+                    .OrderBy(sp => sp.TenSP)
+                    .ToList();
+
+                return View();
+            }
+        }
+        // GET: Admin/ChiTietHoaDonNhap
+        public ActionResult ChiTietHoaDonNhap(string id)
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(id))
+                {
+                    TempData["Error"] = "Mã hóa đơn không hợp lệ!";
+                    return RedirectToAction("DanhSachHoaDonNhap");
+                }
+
+                // Tìm hóa đơn (thử nhiều cách)
+                var hoaDon = db.HOADONNHAPHANGs
+                    .FirstOrDefault(h => h.MaHDN.Trim() == id.Trim());
+
+                if (hoaDon == null)
+                {
+                    TempData["Error"] = "Không tìm thấy hóa đơn!";
+                    return RedirectToAction("DanhSachHoaDonNhap");
+                }
+
+                // Lấy chi tiết sản phẩm
+                var chiTiet = (from pn in db.PHIEUNHAPs
+                               join sp in db.SANPHAMs on pn.MaSP.Trim() equals sp.MaSP.Trim()
+                               where pn.MaHDN.Trim() == id.Trim()
+                               select new ChiTietNhapKhoViewModel
+                               {
+                                   MaHDN = pn.MaHDN,
+                                   MaSP = pn.MaSP,
+                                   TenSP = sp.TenSP,
+                                   HinhAnh = sp.HinhAnh,
+                                   SoLuong = pn.SoLuong,
+                                   DonGiaNhap = pn.DonGiaNhap,
+                                   ThanhTien = pn.ThanhTien,
+                                   SoLuongTonHienTai = sp.SoLuongTon
+                               }).ToList();
+
+                // Lấy thông tin liên quan
+                ViewBag.HoaDon = hoaDon;
+                ViewBag.NhaCungCap = db.NHACUNGCAPs.FirstOrDefault(n => n.MaNCC.Trim() == hoaDon.MaNCC.Trim());
+                ViewBag.NguoiTao = db.NGUOIDUNGs.FirstOrDefault(u => u.MaUser.Trim() == hoaDon.MaQL.Trim());
+
+                // Hiển thị trạng thái đẹp hơn
+                ViewBag.TrangThaiDisplay = GetTrangThaiDisplay(hoaDon.TrangThai);
+                ViewBag.TrangThaiBadgeClass = GetTrangThaiBadgeClass(hoaDon.TrangThai);
+
+                return View(chiTiet);
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = "Lỗi: " + ex.Message;
+                return RedirectToAction("DanhSachHoaDonNhap");
+            }
+        }
+
+        // Helper methods
+        private string GetTrangThaiDisplay(string trangThai)
+        {
+            switch (trangThai?.Trim())
+            {
+                case "ChoXacNhan": return "Chờ xác nhận";
+                case "DaDuyet": return "Đã duyệt";
+                case "DaHuy": return "Đã hủy";
+                default: return trangThai;
+            }
+        }
+
+        private string GetTrangThaiBadgeClass(string trangThai)
+        {
+            switch (trangThai?.Trim())
+            {
+                case "ChoXacNhan": return "badge-warning";
+                case "DaDuyet": return "badge-success";
+                case "DaHuy": return "badge-danger";
+                default: return "badge-secondary";
+            }
+        }
+
+        // POST: Admin/ThemSanPhamVaoHoaDon
+        [HttpPost]
+        public JsonResult ThemSanPhamVaoHoaDon(string maHDN, string maSP, int soLuong, decimal donGiaNhap)
+        {
+            try
+            {
+                var param1 = new SqlParameter("@MaHDN", maHDN.Trim());
+                var param2 = new SqlParameter("@MaSP", maSP.Trim());
+                var param3 = new SqlParameter("@SoLuong", soLuong);
+                var param4 = new SqlParameter("@DonGiaNhap", donGiaNhap);
+
+                db.Database.ExecuteSqlCommand(
+                    "EXEC SP_ThemSanPhamNhap @MaHDN, @MaSP, @SoLuong, @DonGiaNhap",
+                    param1, param2, param3, param4
+                );
+
+                // Lấy lại tổng tiền
+                var hoaDon = db.HOADONNHAPHANGs.Find(maHDN.Trim());
+
+                return Json(new
+                {
+                    success = true,
+                    message = "Thêm sản phẩm thành công! ",
+                    tongTien = hoaDon.TongTien
+                });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = "Lỗi: " + ex.Message });
+            }
+        }
+
+        // POST: Admin/XoaSanPhamKhoiHoaDon
+        [HttpPost]
+        public JsonResult XoaSanPhamKhoiHoaDon(string maHDN, string maSP)
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(maHDN) || string.IsNullOrEmpty(maSP))
+                {
+                    return Json(new { success = false, message = "Thông tin không hợp lệ!" });
+                }
+
+                var result = db.Database.SqlQuery<SpResult>(
+                    "EXEC SP_XoaSanPhamKhoiHoaDon @MaHDN, @MaSP",
+                    new SqlParameter("@MaHDN", maHDN.Trim()),
+                    new SqlParameter("@MaSP", maSP.Trim())
+                ).FirstOrDefault();
+
+                if (result != null && result.Success == 1)
+                {
+                    // Lấy lại tổng tiền
+                    var hoaDon = db.HOADONNHAPHANGs.FirstOrDefault(h => h.MaHDN.Trim() == maHDN.Trim());
+
+                    return Json(new
+                    {
+                        success = true,
+                        message = result.Message,
+                        tongTien = hoaDon?.TongTien ?? 0
+                    });
+                }
+                else
+                {
+                    return Json(new { success = false, message = result?.Message ?? "Lỗi không xác định" });
+                }
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = "Lỗi: " + ex.Message });
+            }
+        }
+        // POST: Admin/DuyetHoaDonNhap
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public JsonResult DuyetHoaDonNhap(string maHDN)
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(maHDN))
+                {
+                    return Json(new { success = false, message = "Mã hóa đơn không hợp lệ!" });
+                }
+
+                System.Diagnostics.Debug.WriteLine($"========== DUYỆT HÓA ĐƠN ==========");
+                System.Diagnostics.Debug.WriteLine($"MaHDN: {maHDN}");
+
+                // ✅ CHỈ GỬI 1 PARAMETER
+                var result = db.Database.SqlQuery<SpResult>(
+                    "EXEC SP_DuyetHoaDonNhap @MaHDN",
+                    new SqlParameter("@MaHDN", maHDN.Trim())
+                ).FirstOrDefault();
+
+                if (result != null && result.Success == 1)
+                {
+                    System.Diagnostics.Debug.WriteLine("✅ Duyệt thành công");
+                    return Json(new { success = true, message = result.Message });
+                }
+                else
+                {
+                    System.Diagnostics.Debug.WriteLine("❌ Duyệt thất bại:  " + result?.Message);
+                    return Json(new { success = false, message = result?.Message ?? "Lỗi không xác định" });
+                }
+            }
+            catch (Exception ex)
+            {
+                var errorMsg = ex.InnerException?.Message ?? ex.Message;
+                System.Diagnostics.Debug.WriteLine("❌ EXCEPTION:  " + ex.ToString());
+
+                return Json(new { success = false, message = "Lỗi:  " + errorMsg });
+            }
+        }
+        // POST: Admin/HuyHoaDonNhap
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public ActionResult HuyHoaDonNhap(string maHDN, string lyDo)
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(maHDN))
+                {
+                    TempData["Error"] = "Mã hóa đơn không hợp lệ!";
+                    return RedirectToAction("DanhSachHoaDonNhap");
+                }
+
+                if (string.IsNullOrEmpty(lyDo))
+                {
+                    TempData["Error"] = "Vui lòng nhập lý do hủy!";
+                    return RedirectToAction("ChiTietHoaDonNhap", new { id = maHDN });
+                }
+
+                var result = db.Database.SqlQuery<SpResult>(
+                    "EXEC SP_HuyHoaDonNhap @MaHDN, @LyDo",
+                    new SqlParameter("@MaHDN", maHDN.Trim()),
+                    new SqlParameter("@LyDo", lyDo)
+                ).FirstOrDefault();
+
+                if (result != null && result.Success == 1)
+                {
+                    TempData["Success"] = result.Message;
+                    return RedirectToAction("DanhSachHoaDonNhap");
+                }
+                else
+                {
+                    TempData["Error"] = result?.Message ?? "Lỗi không xác định";
+                    return RedirectToAction("ChiTietHoaDonNhap", new { id = maHDN });
+                }
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = "Lỗi: " + (ex.InnerException?.Message ?? ex.Message);
+                return RedirectToAction("ChiTietHoaDonNhap", new { id = maHDN });
+            }
+        }
+        // GET: Admin/DanhSachHoaDonNhap
+        public ActionResult DanhSachHoaDonNhap(string trangThai = "")
+        {
+            try
+            {
+                var query = db.HOADONNHAPHANGs.AsQueryable();
+
+                // Lọc theo trạng thái
+                if (!string.IsNullOrEmpty(trangThai))
+                {
+                    query = query.Where(h => h.TrangThai == trangThai);
+                }
+
+                var danhSach = query
+                    .OrderByDescending(h => h.NgayTao)
+                    .ToList();
+
+                // Truyền trạng thái hiện tại để highlight menu
+                ViewBag.TrangThaiFilter = trangThai;
+
+                // Đếm số lượng theo trạng thái
+                ViewBag.SoChoXacNhan = db.HOADONNHAPHANGs.Count(h => h.TrangThai == "ChoXacNhan");
+                ViewBag.SoDaDuyet = db.HOADONNHAPHANGs.Count(h => h.TrangThai == "DaDuyet");
+                ViewBag.SoDaHuy = db.HOADONNHAPHANGs.Count(h => h.TrangThai == "DaHuy");
+
+                return View(danhSach);
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = "Lỗi: " + ex.Message;
+                return View(new List<HOADONNHAPHANG>());
+            }
+        }
         // ==========================================
         // BÁO CÁO - CẢ 2 ĐỀU XEM ĐƯỢC
         // ==========================================

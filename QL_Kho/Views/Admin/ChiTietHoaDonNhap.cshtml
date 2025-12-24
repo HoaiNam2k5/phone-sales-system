@@ -1,0 +1,536 @@
+﻿@model List<QL_Kho.ViewModels.ChiTietNhapKhoViewModel>
+@{
+    ViewBag.Title = "Chi tiết hóa đơn nhập";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    var hoaDon = ViewBag.HoaDon as QL_Kho.Models.HOADONNHAPHANG;
+    var nhaCungCap = ViewBag.NhaCungCap as QL_Kho.Models.NHACUNGCAP;
+    var nguoiTao = ViewBag.NguoiTao as QL_Kho.Models.NGUOIDUNG;
+}
+
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <h1 class="h3 mb-0 text-gray-800">
+        <i class="fas fa-file-invoice text-primary"></i> Chi tiết hóa đơn nhập
+    </h1>
+    <div>
+        @if (hoaDon.TrangThai == "Chờ duyệt")
+        {
+            <button type="button" class="btn btn-success me-2" onclick="duyetHoaDon()">
+                <i class="fas fa-check-circle"></i> Duyệt hóa đơn
+            </button>
+            <button type="button" class="btn btn-danger me-2" onclick="huyHoaDon()">
+                <i class="fas fa-times-circle"></i> Hủy hóa đơn
+            </button>
+        }
+        <a href="@Url.Action("QuanLyNhapKho", "Admin")" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Quay lại
+        </a>
+    </div>
+</div>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show">
+        <i class="fas fa-check-circle"></i> @TempData["Success"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show">
+        <i class="fas fa-exclamation-circle"></i> @TempData["Error"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<div class="row">
+    <!-- Thông tin hóa đơn -->
+    <div class="col-lg-4 mb-4">
+        <!-- Thông tin chung -->
+        <div class="card shadow mb-3">
+            <div class="card-header py-3 bg-primary text-white">
+                <h6 class="m-0 font-weight-bold">
+                    <i class="fas fa-info-circle"></i> Thông tin hóa đơn
+                </h6>
+            </div>
+            <div class="card-body">
+                <table class="table table-borderless mb-0">
+                    <tr>
+                        <td class="fw-bold">Mã HĐN:</td>
+                        <td><strong class="text-primary">#@hoaDon.MaHDN.Trim()</strong></td>
+                    </tr>
+                    <tr>
+                        <td class="fw-bold">Ngày nhập:</td>
+                        <td>
+                            <i class="far fa-calendar"></i>
+                            @hoaDon.NgayNhap.ToString("dd/MM/yyyy HH:mm")
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="fw-bold">Người tạo:</td>
+                        <td>@nguoiTao.TenNguoiDung</td>
+                    </tr>
+                    <tr>
+                        <td class="fw-bold">Trạng thái:</td>
+                        <td>
+                            @switch (hoaDon.TrangThai)
+                            {
+                                case "Chờ duyệt":
+                                    <span class="badge bg-warning">
+                                        <i class="fas fa-clock"></i> Chờ duyệt
+                                    </span>
+                                    break;
+                                case "Đã duyệt":
+                                    <span class="badge bg-success">
+                                        <i class="fas fa-check-circle"></i> Đã duyệt
+                                    </span>
+                                    break;
+                                case "Đã hủy":
+                                    <span class="badge bg-danger">
+                                        <i class="fas fa-times-circle"></i> Đã hủy
+                                    </span>
+                                    break;
+                            }
+                        </td>
+                    </tr>
+                    @if (!string.IsNullOrEmpty(hoaDon.GhiChu))
+                    {
+                        <tr>
+                            <td class="fw-bold">Ghi chú: </td>
+                            <td>@hoaDon.GhiChu</td>
+                        </tr>
+                    }
+                </table>
+            </div>
+        </div>
+
+        <!-- Nhà cung cấp -->
+        <div class="card shadow mb-3">
+            <div class="card-header py-3 bg-info text-white">
+                <h6 class="m-0 font-weight-bold">
+                    <i class="fas fa-truck"></i> Nhà cung cấp
+                </h6>
+            </div>
+            <div class="card-body">
+                <h6 class="mb-2">@nhaCungCap.TenNCC</h6>
+                @if (!string.IsNullOrEmpty(nhaCungCap.DiaChi))
+                {
+                    <p class="mb-1">
+                        <i class="fas fa-map-marker-alt text-danger"></i>
+                        @nhaCungCap.DiaChi
+                    </p>
+                }
+                @if (!string.IsNullOrEmpty(nhaCungCap.SDT))
+                {
+                    <p class="mb-1">
+                        <i class="fas fa-phone text-success"></i>
+                        @nhaCungCap.SDT
+                    </p>
+                }
+                @if (!string.IsNullOrEmpty(nhaCungCap.Email))
+                {
+                    <p class="mb-0">
+                        <i class="fas fa-envelope text-primary"></i>
+                        @nhaCungCap.Email
+                    </p>
+                }
+            </div>
+        </div>
+
+        <!-- Tổng tiền -->
+        <div class="card shadow">
+            <div class="card-header py-3 bg-success text-white">
+                <h6 class="m-0 font-weight-bold">
+                    <i class="fas fa-calculator"></i> Tổng tiền
+                </h6>
+            </div>
+            <div class="card-body">
+                <h3 class="text-success mb-2" id="tongTienDisplay">
+                    @((hoaDon.TongTien ?? 0).ToString("N0")) ₫
+                </h3>
+                <p class="mb-0 text-muted">
+                    Tổng:  <strong>@Model.Sum(x => x.SoLuong)</strong> sản phẩm
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Danh sách sản phẩm -->
+    <div class="col-lg-8 mb-4">
+        <!-- Form thêm sản phẩm (chỉ hiện khi chờ duyệt) -->
+        @if (hoaDon.TrangThai == "Chờ duyệt")
+        {
+            <div class="card shadow mb-3">
+                <div class="card-header py-3 bg-primary text-white">
+                    <h6 class="m-0 font-weight-bold">
+                        <i class="fas fa-plus"></i> Thêm sản phẩm
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-5 mb-2">
+                            <select id="sanPhamSelect" class="form-select">
+                                <option value="">-- Chọn sản phẩm --</option>
+                                @foreach (var sp in ViewBag.SanPham as List<QL_Kho.Models.SANPHAM>)
+                                {
+                                    <option value="@sp.MaSP.Trim()">@sp.TenSP</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-3 mb-2">
+                            <input type="number" id="soLuongInput" class="form-control"
+                                   value="1" min="1" placeholder="Số lượng">
+                        </div>
+                        <div class="col-md-3 mb-2">
+                            <input type="number" id="donGiaInput" class="form-control"
+                                   value="0" min="0" step="1000" placeholder="Đơn giá">
+                        </div>
+                        <div class="col-md-1 mb-2">
+                            <button type="button" class="btn btn-primary w-100" onclick="themSanPham()">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+
+        <!-- Bảng chi tiết sản phẩm -->
+        <div class="card shadow">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <i class="fas fa-list"></i> Chi tiết sản phẩm
+                    <span class="badge bg-primary">@Model.Count</span>
+                </h6>
+            </div>
+            <div class="card-body">
+                @if (Model.Any())
+                {
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th width="60">STT</th>
+                                    <th>Sản phẩm</th>
+                                    <th width="100">Số lượng</th>
+                                    <th width="120">Đơn giá</th>
+                                    <th width="120">Thành tiền</th>
+                                    <th width="100">Tồn kho</th>
+                                    @if (hoaDon.TrangThai == "Chờ duyệt")
+                                    {
+                                        <th width="80">Xóa</th>
+                                    }
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @{
+                                    var stt = 1;
+                                }
+                                @foreach (var item in Model)
+                                {
+                                    <tr>
+                                        <td class="text-center">@stt</td>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                @if (!string.IsNullOrEmpty(item.HinhAnh))
+                                                {
+                                                    <img src="@Url.Content("~/Content/images/" + item.HinhAnh)"
+                                                         alt="@item.TenSP"
+                                                         class="img-thumbnail me-2"
+                                                         style="width: 50px; height: 50px; object-fit: cover;"
+                                                         onerror="this.src='https://via.placeholder.com/50'">
+                                                }
+                                                <div>
+                                                    <strong>@item.TenSP</strong><br>
+                                                    <small class="text-muted">Mã:  @item.MaSP.Trim()</small>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="text-center">
+                                            <strong class="text-primary">@item.SoLuong</strong>
+                                        </td>
+                                        <td class="text-end">
+                                            @((item.DonGiaNhap ?? 0).ToString("N0"))
+                                        </td>
+                                        <td class="text-end">
+                                            <strong class="text-success">
+                                                @((item.ThanhTien ?? 0).ToString("N0")) ₫
+                                            </strong>
+                                        </td>
+                                        <td class="text-center">
+                                            @if (hoaDon.TrangThai == "Đã duyệt")
+                                            {
+                                                <span class="badge bg-success">
+                                                    @item.SoLuongTonHienTai
+                                                </span>
+                                            }
+                                            else
+                                            {
+                                                <span class="text-muted">
+                                                    @item.SoLuongTonHienTai
+                                                </span>
+                                            }
+                                        </td>
+                                        @if (hoaDon.TrangThai == "Chờ duyệt")
+                                        {
+                                            <td class="text-center">
+                                                <button type="button" class="btn btn-sm btn-danger"
+                                                        onclick="xoaSanPham('@item.MaSP.Trim()')">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </td>
+                                        }
+                                    </tr>
+                                    stt++;
+                                }
+                            </tbody>
+                            <tfoot class="table-light">
+                                <tr>
+                                    <td colspan="@(hoaDon.TrangThai == "Chờ duyệt" ? "4" : "3")" class="text-end">
+                                        <strong>TỔNG CỘNG:</strong>
+                                    </td>
+                                    <td class="text-end">
+                                        <h5 class="mb-0 text-success">
+                                            @((hoaDon.TongTien ??  0).ToString("N0")) ₫
+                                        </h5>
+                                    </td>
+                                    <td colspan="@(hoaDon.TrangThai == "Chờ duyệt" ? "2" : "1")"></td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                }
+                else
+                {
+                    <div class="text-center py-5">
+                        <i class="fas fa-inbox fa-4x text-muted mb-3"></i>
+                        <h5 class="text-muted">Chưa có sản phẩm nào</h5>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- Lưu ý về tồn kho -->
+        @if (hoaDon.TrangThai == "Chờ duyệt")
+        {
+            <div class="alert alert-warning mt-3">
+                <i class="fas fa-exclamation-triangle"></i>
+                <strong>Lưu ý:</strong> Khi duyệt hóa đơn, tồn kho sẽ được cộng tự động theo số lượng nhập.
+            </div>
+        }
+        else if (hoaDon.TrangThai == "Đã duyệt")
+        {
+            <div class="alert alert-success mt-3">
+                <i class="fas fa-check-circle"></i>
+                <strong>Đã duyệt:</strong> Tồn kho đã được cập nhật thành công.
+            </div>
+        }
+    </div>
+</div>
+
+@section scripts {
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        var maHDN = '@hoaDon.MaHDN. Trim()';
+
+        // Thêm sản phẩm
+        function themSanPham() {
+            var maSP = $('#sanPhamSelect').val();
+            var soLuong = parseInt($('#soLuongInput').val());
+            var donGia = parseInt($('#donGiaInput').val());
+
+            if (! maSP) {
+                Swal.fire('Lỗi! ', 'Vui lòng chọn sản phẩm!', 'error');
+                return;
+            }
+
+            if (soLuong <= 0) {
+                Swal.fire('Lỗi!', 'Số lượng phải lớn hơn 0! ', 'error');
+                return;
+            }
+
+            if (donGia <= 0) {
+                Swal.fire('Lỗi!', 'Đơn giá phải lớn hơn 0!', 'error');
+                return;
+            }
+
+            Swal.fire({
+                title: 'Đang xử lý...',
+                allowOutsideClick: false,
+                didOpen: () => { Swal.showLoading(); }
+            });
+
+            $.ajax({
+                url: '@Url.Action("ThemSanPhamVaoHoaDon", "Admin")',
+                type: 'POST',
+                data: {
+                    maHDN: maHDN,
+                    maSP: maSP,
+                    soLuong: soLuong,
+                    donGiaNhap: donGia
+                },
+                success: function(result) {
+                    Swal.close();
+                    if (result.success) {
+                        Swal.fire('Thành công!', result.message, 'success').then(() => {
+                            location.reload();
+                        });
+                    } else {
+                        Swal.fire('Lỗi!', result.message, 'error');
+                    }
+                },
+                error: function() {
+                    Swal. close();
+                    Swal. fire('Lỗi! ', 'Có lỗi xảy ra! ', 'error');
+                }
+            });
+        }
+
+        // Xóa sản phẩm
+        function xoaSanPham(maSP) {
+            Swal. fire({
+                title: 'Xác nhận xóa? ',
+                text: 'Bạn có chắc muốn xóa sản phẩm này?',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor:  '#3085d6',
+                confirmButtonText: 'Xóa',
+                cancelButtonText: 'Hủy'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    Swal.fire({
+                        title: 'Đang xử lý...',
+                        allowOutsideClick: false,
+                        didOpen: () => { Swal.showLoading(); }
+                    });
+
+                    $.ajax({
+                        url: '@Url.Action("XoaSanPhamKhoiHoaDon", "Admin")',
+                        type: 'POST',
+                        data: {
+                            maHDN: maHDN,
+                            maSP:  maSP
+                        },
+                        success: function(result) {
+                            Swal. close();
+                            if (result.success) {
+                                Swal.fire('Đã xóa!', result. message, 'success').then(() => {
+                                    location.reload();
+                                });
+                            } else {
+                                Swal.fire('Lỗi!', result.message, 'error');
+                            }
+                        },
+                        error: function() {
+                            Swal.close();
+                            Swal.fire('Lỗi!', 'Có lỗi xảy ra!', 'error');
+                        }
+                    });
+                }
+            });
+        }
+
+        // Duyệt hóa đơn
+        function duyetHoaDon() {
+            Swal.fire({
+                title: 'Xác nhận duyệt?',
+                html: 'Bạn có chắc muốn duyệt hóa đơn này? <br><strong class="text-success">Tồn kho sẽ được cập nhật tự động. </strong>',
+                icon: 'question',
+                showCancelButton:  true,
+                confirmButtonColor:  '#28a745',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Duyệt ngay',
+                cancelButtonText:  'Hủy'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    Swal.fire({
+                        title: 'Đang xử lý...',
+                        text: 'Vui lòng đợi...',
+                        allowOutsideClick: false,
+                        didOpen: () => { Swal.showLoading(); }
+                    });
+
+                    $.ajax({
+                        url: '@Url.Action("DuyetHoaDonNhap", "Admin")',
+                        type: 'POST',
+                        data: { maHDN: maHDN },
+                        success: function(result) {
+                            Swal.close();
+                            if (result.success) {
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Thành công!',
+                                    text: result.message,
+                                    confirmButtonText: 'OK'
+                                }).then(() => {
+                                    location.reload();
+                                });
+                            } else {
+                                Swal.fire('Lỗi!', result.message, 'error');
+                            }
+                        },
+                        error:  function() {
+                            Swal.close();
+                            Swal.fire('Lỗi!', 'Có lỗi xảy ra!', 'error');
+                        }
+                    });
+                }
+            });
+        }
+
+        // Hủy hóa đơn
+        function huyHoaDon() {
+            Swal.fire({
+                title: 'Lý do hủy',
+                input: 'textarea',
+                inputLabel: 'Vui lòng nhập lý do hủy hóa đơn',
+                inputPlaceholder: 'Nhập lý do...',
+                inputAttributes: {
+                    'aria-label': 'Nhập lý do hủy'
+                },
+                showCancelButton: true,
+                confirmButtonColor: '#dc3545',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Hủy hóa đơn',
+                cancelButtonText: 'Đóng',
+                inputValidator: (value) => {
+                    if (!value) {
+                        return 'Vui lòng nhập lý do! ';
+                    }
+                }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    Swal.fire({
+                        title: 'Đang xử lý...',
+                        allowOutsideClick: false,
+                        didOpen: () => { Swal.showLoading(); }
+                    });
+
+                    $.ajax({
+                        url: '@Url.Action("HuyHoaDonNhap", "Admin")',
+                        type: 'POST',
+                        data: {
+                            maHDN:  maHDN,
+                            lyDo: result.value
+                        },
+                        success: function(result) {
+                            Swal.close();
+                            if (result.success) {
+                                Swal.fire('Đã hủy!', result. message, 'success').then(() => {
+                                    location.reload();
+                                });
+                            } else {
+                                Swal.fire('Lỗi!', result.message, 'error');
+                            }
+                        },
+                        error: function() {
+                            Swal.close();
+                            Swal.fire('Lỗi!', 'Có lỗi xảy ra!', 'error');
+                        }
+                    });
+                }
+            });
+        }
+    </script>
+}

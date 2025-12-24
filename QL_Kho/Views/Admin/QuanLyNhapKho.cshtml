@@ -1,0 +1,433 @@
+﻿@model List<QL_Kho.ViewModels.HoaDonNhapViewModel>
+@{
+    ViewBag.Title = "Quản lý nhập kho";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+@Html.AntiForgeryToken()
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <h1 class="h3 mb-0 text-gray-800">
+        <i class="fas fa-dolly text-primary"></i> Quản lý nhập kho
+    </h1>
+    <a href="@Url.Action("TaoHoaDonNhap", "Admin")" class="btn btn-primary shadow-sm">
+        <i class="fas fa-plus fa-sm"></i> Tạo hóa đơn nhập
+    </a>
+</div>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show">
+        <i class="fas fa-check-circle"></i> @TempData["Success"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show">
+        <i class="fas fa-exclamation-circle"></i> @TempData["Error"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<!-- ✅ THỐNG KÊ NHANH -->
+<div class="row mb-4">
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-warning shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                            Chờ duyệt
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">
+                            @ViewBag.SoChoXacNhan hóa đơn
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-clock fa-2x text-warning"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-success shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                            Đã duyệt
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">
+                            @ViewBag.SoDaDuyet hóa đơn
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-check-circle fa-2x text-success"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-danger shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">
+                            Đã hủy
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">
+                            @ViewBag.SoDaHuy hóa đơn
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-times-circle fa-2x text-danger"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-info shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                            Tổng giá trị
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">
+                            @(((decimal?)ViewBag.TongGiaTri ?? 0).ToString("N0")) ₫
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-dollar-sign fa-2x text-info"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Bộ lọc -->
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">
+            <i class="fas fa-filter"></i> Bộ lọc
+        </h6>
+    </div>
+    <div class="card-body">
+        <form method="get" action="@Url.Action("QuanLyNhapKho", "Admin")" id="filterForm">
+            <div class="row">
+                <div class="col-md-3 mb-3">
+                    <label class="form-label">Tìm kiếm</label>
+                    <input type="text" name="search" class="form-control"
+                           placeholder="Mã HĐN, NCC..." value="@ViewBag.Search">
+                </div>
+
+                <div class="col-md-3 mb-3">
+                    <label class="form-label">Trạng thái</label>
+                    <select name="status" class="form-select">
+                        <option value="">-- Tất cả --</option>
+                        @* ✅ SỬA LẠI GIÁ TRỊ *@
+                        <option value="ChoXacNhan" @(ViewBag.Status == "ChoXacNhan" ? "selected" : "")>Chờ xác nhận</option>
+                        <option value="DaDuyet" @(ViewBag.Status == "DaDuyet" ? "selected" : "")>Đã duyệt</option>
+                        <option value="DaHuy" @(ViewBag.Status == "DaHuy" ? "selected" : "")>Đã hủy</option>
+                    </select>
+                </div>
+
+                <div class="col-md-2 mb-3">
+                    <label class="form-label">Từ ngày</label>
+                    <input type="date" name="fromDate" class="form-control" value="@ViewBag.FromDate">
+                </div>
+
+                <div class="col-md-2 mb-3">
+                    <label class="form-label">Đến ngày</label>
+                    <input type="date" name="toDate" class="form-control" value="@ViewBag.ToDate">
+                </div>
+
+                <div class="col-md-2 mb-3">
+                    <label class="form-label">&nbsp;</label>
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-search"></i> Lọc
+                        </button>
+                        <a href="@Url.Action("QuanLyNhapKho", "Admin" )" class="btn btn-secondary btn-sm">
+                            <i class="fas fa-redo"></i> Reset
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Danh sách hóa đơn -->
+<div class="card shadow mb-4">
+    <div class="card-header py-3 d-flex justify-content-between align-items-center">
+        <h6 class="m-0 font-weight-bold text-primary">
+            <i class="fas fa-list"></i> Danh sách hóa đơn nhập
+            <span class="badge bg-primary">@Model.Count</span>
+        </h6>
+        @* ✅ NÚT EXPORT EXCEL *@
+        @if (Model.Any())
+        {
+            <a href="@Url.Action("ExportExcel", "Admin" , new {
+               search=ViewBag.Search,
+               status=ViewBag.Status,
+               fromDate=ViewBag.FromDate,
+               toDate=ViewBag.ToDate
+               })" class="btn btn-success btn-sm">
+                <i class="fas fa-file-excel"></i> Xuất Excel
+            </a>
+        }
+    </div>
+    <div class="card-body">
+        @if (Model.Any())
+        {
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover" id="dataTable">
+                    <thead class="table-light">
+                        <tr>
+                            <th width="100">Mã HĐN</th>
+                            <th>Nhà cung cấp</th>
+                            <th>Người tạo</th>
+                            <th width="110">Ngày nhập</th>
+                            <th width="80" class="text-center">Số SP</th>
+                            <th width="130" class="text-end">Tổng tiền</th>
+                            <th width="110" class="text-center">Trạng thái</th>
+                            <th width="150" class="text-center">Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model)
+                        {
+                            <tr>
+                                <td>
+                                    <strong class="text-primary">#@item.MaHDN.Trim()</strong>
+                                </td>
+                                <td>
+                                    <i class="fas fa-building text-muted"></i>
+                                    @item.TenNCC
+                                </td>
+                                <td>
+                                    <i class="fas fa-user text-muted"></i>
+                                    @item.TenNguoiTao
+                                </td>
+                                <td>
+                                    <i class="far fa-calendar text-muted"></i>
+                                    @item.NgayNhap.ToString("dd/MM/yyyy")
+                                    <br>
+                                    <small class="text-muted">
+                                        <i class="far fa-clock"></i>
+                                        @item.NgayNhap.ToString("HH:mm")
+                                    </small>
+                                </td>
+                                <td class="text-center">
+                                    <span class="badge bg-info">@item.SoLuongSanPham</span>
+                                </td>
+                                <td class="text-end">
+                                    <strong class="text-success">
+                                        @((item.TongTien ??  0).ToString("N0")) ₫
+                                    </strong>
+                                </td>
+                                <td class="text-center">
+                                    @* ✅ CẬP NHẬT TRẠNG THÁI *@
+                                    @switch (item.TrangThai?.Trim())
+                                    {
+                                        case "ChoXacNhan":
+                                            <span class="badge bg-warning text-dark">
+                                                <i class="fas fa-clock"></i> Chờ xác nhận
+                                            </span>
+                                            break;
+                                        case "DaDuyet":
+                                            <span class="badge bg-success">
+                                                <i class="fas fa-check-circle"></i> Đã duyệt
+                                            </span>
+                                            break;
+                                        case "DaHuy":
+                                            <span class="badge bg-danger">
+                                                <i class="fas fa-times-circle"></i> Đã hủy
+                                            </span>
+                                            break;
+                                        default:
+                                            <span class="badge bg-secondary">@item.TrangThai</span>
+                                            break;
+                                    }
+                                </td>
+                                <td class="text-center">
+                                    <div class="btn-group" role="group">
+                                        <a href="@Url.Action("ChiTietHoaDonNhap", "Admin", new { id = item.MaHDN.Trim() })"
+                                           class="btn btn-sm btn-info" title="Xem chi tiết">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+
+                                        @* ✅ NÚT DUYỆT CHO HÓA ĐƠN CHỜ XÁC NHẬN *@
+                                        @if (item.TrangThai?.Trim() == "ChoXacNhan")
+                                        {
+                                            <button type="button" class="btn btn-sm btn-success"
+                                                    onclick="duyetHoaDon('@item.MaHDN.Trim()')"
+                                                    title="Duyệt hóa đơn">
+                                                <i class="fas fa-check"></i>
+                                            </button>
+                                        }
+
+                                        @* ✅ NÚT IN HÓA ĐƠN *@
+                                        @if (item.TrangThai?.Trim() == "DaDuyet")
+                                        {
+                                            <a href="@Url.Action("InHoaDon", "Admin", new { id = item.MaHDN. Trim() })"
+                                               class="btn btn-sm btn-secondary"
+                                               target="_blank"
+                                               title="In hóa đơn">
+                                                <i class="fas fa-print"></i>
+                                            </a>
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                    <tfoot class="table-light">
+                        <tr>
+                            <th colspan="5" class="text-end">Tổng cộng:</th>
+                            <th class="text-end">
+                                <strong class="text-success">
+                                    @Model.Sum(x => x.TongTien ?? 0).ToString("N0") ₫
+                                </strong>
+                            </th>
+                            <th colspan="2"></th>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        }
+        else
+        {
+            <div class="text-center py-5">
+                <i class="fas fa-inbox fa-4x text-muted mb-3"></i>
+                <h5 class="text-muted">Chưa có hóa đơn nhập nào</h5>
+                <p class="text-muted">Bắt đầu bằng cách tạo hóa đơn nhập đầu tiên của bạn</p>
+                <a href="@Url.Action("TaoHoaDonNhap", "Admin" )" class="btn btn-primary mt-3">
+                    <i class="fas fa-plus"></i> Tạo hóa đơn nhập đầu tiên
+                </a>
+            </div>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <script>
+        // ✅ HELPER FUNCTION
+        function getToken() {
+            return $('input[name="__RequestVerificationToken"]').val();
+        }
+
+        // ✅ DUYỆT HÓA ĐƠN
+        function duyetHoaDon(maHDN) {
+            // Kiểm tra token trước
+            var token = getToken();
+            if (!token) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Lỗi!',
+                    text:  'Không tìm thấy token bảo mật.  Vui lòng refresh trang.'
+                });
+                return;
+            }
+
+            Swal.fire({
+                title: 'Xác nhận duyệt hóa đơn?',
+                html: 'Hóa đơn: <strong>' + maHDN + '</strong><br>Sau khi duyệt, tồn kho sẽ được cập nhật.',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#28a745',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: '<i class="fas fa-check"></i> Xác nhận duyệt',
+                cancelButtonText: '<i class="fas fa-times"></i> Hủy'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Show loading
+                    Swal. fire({
+                        title: 'Đang xử lý...',
+                        html: 'Vui lòng đợi',
+                        allowOutsideClick: false,
+                        didOpen: () => {
+                            Swal. showLoading();
+                        }
+                    });
+
+                    // AJAX request
+                    $.ajax({
+                        url: '@Url.Action("DuyetHoaDonNhap", "Admin")',
+                        type: 'POST',
+                        data: {
+                            __RequestVerificationToken: token,
+                            maHDN: maHDN
+                        },
+                        success: function (response) {
+                            if (response. success) {
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Thành công!',
+                                    text: response.message,
+                                    timer: 2000,
+                                    showConfirmButton: false
+                                }).then(() => {
+                                    location. reload();
+                                });
+                            } else {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Lỗi!',
+                                    text: response.message
+                                });
+                            }
+                        },
+                        error:  function (xhr, status, error) {
+                            console.error('AJAX Error:', xhr.responseText);
+
+                            var errorMsg = 'Có lỗi xảy ra khi duyệt hóa đơn! ';
+
+                            if (xhr.responseJSON && xhr.responseJSON.message) {
+                                errorMsg = xhr.responseJSON.message;
+                            } else if (xhr.responseText) {
+                                // Parse HTML error nếu có
+                                var parser = new DOMParser();
+                                var doc = parser.parseFromString(xhr.responseText, 'text/html');
+                                var h2 = doc.querySelector('h2 i');
+                                if (h2) {
+                                    errorMsg = h2.textContent;
+                                }
+                            }
+
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Lỗi!',
+                                text: errorMsg
+                            });
+                        }
+                    });
+                }
+            });
+        }
+
+        // ✅ DATATABLES
+        $(document).ready(function () {
+            if ($.fn.DataTable) {
+                $('#dataTable').DataTable({
+                    "language": {
+                        "url":"//cdn.datatables.net/plug-ins/1.13.4/i18n/vi.json"
+                    },
+                    "order": [[3, "desc"]],
+                    "pageLength": 25,
+                    "responsive": true
+                });
+            }
+        });
+    </script>
+}
