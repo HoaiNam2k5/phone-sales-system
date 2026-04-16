@@ -1,270 +1,144 @@
-# 📦 Hệ Thống Quản Lý Kho Hàng Điện Tử (QL_Kho)
+# 📦 Phone Sales System (Electronic Warehouse Management)
 
-Hệ thống quản lý kho hàng điện tử được xây dựng trên nền tảng ASP.NET MVC 5, hỗ trợ quản lý sản phẩm, đơn hàng, người dùng và các nghiệp vụ kinh doanh điện tử.
+![C#](https://img.shields.io/badge/C%23-239120?style=for-the-badge&logo=c-sharp&logoColor=white)
+![ASP.NET MVC](https://img.shields.io/badge/ASP.NET_MVC5-512BD4?style=for-the-badge&logo=dotnet&logoColor=white)
+![SQL Server](https://img.shields.io/badge/SQL_Server-CC2927?style=for-the-badge&logo=microsoft-sql-server&logoColor=white)
+![Bootstrap](https://img.shields.io/badge/Bootstrap-563D7C?style=for-the-badge&logo=bootstrap&logoColor=white)
 
-## 📋 Mục Lục
+## 📖 Our Story
 
-- [Giới Thiệu](#giới-thiệu)
-- [Tính Năng Chính](#tính-năng-chính)
-- [Công Nghệ Sử Dụng](#công-nghệ-sử-dụng)
-- [Yêu Cầu Hệ Thống](#yêu-cầu-hệ-thống)
-- [Hướng Dẫn Cài Đặt](#hướng-dẫn-cài-đặt)
-- [Cấu Trúc Thư Mục](#cấu-trúc-thư-mục)
-- [Hướng Dẫn Sử Dụng](#hướng-dẫn-sử-dụng)
-- [Cơ Sở Dữ Liệu](#cơ-sở-dữ-liệu)
-- [Đóng Góp](#đóng-góp)
-- [Tác Giả](#tác-giả)
+Imagine running a bustling mobile phone store. Every day, you face dozens of orders, hundreds of inventory imports and exports, and relentless customer support needs. Manual bookkeeping or disjointed Excel files quickly become a "nightmare" when your warehouse experiences stock discrepancies or lost inventory. 
 
-## 🎯 Giới Thiệu
-
-QL_Kho là một hệ thống quản lý kho hàng điện tử chuyên nghiệp, được thiết kế để quản lý các sản phẩm điện thoại di động từ nhiều thương hiệu như iPhone, Samsung, Oppo, Vivo, Xiaomi. Hệ thống cung cấp đầy đủ các chức năng từ quản lý sản phẩm, đặt hàng, thanh toán đến báo cáo thống kê.
-
-## ✨ Tính Năng Chính
-
-### 👤 Dành cho Khách Hàng
-- **Đăng ký / Đăng nhập**: Tạo tài khoản và xác thực người dùng
-- **Xem sản phẩm**: Duyệt danh sách sản phẩm theo danh mục
-- **Tìm kiếm**: Tìm kiếm sản phẩm theo từ khóa
-- **Chi tiết sản phẩm**: Xem thông tin chi tiết và sản phẩm liên quan
-- **Giỏ hàng**: Thêm, cập nhật, xóa sản phẩm trong giỏ hàng
-- **Đặt hàng**: Hoàn tất đơn hàng với thông tin giao hàng
-- **Quản lý đơn hàng**: Xem và theo dõi trạng thái đơn hàng
-- **Thông tin cá nhân**: Cập nhật thông tin và đổi mật khẩu
-
-### 🔧 Dành cho Quản Trị Viên
-- **Dashboard**: Tổng quan thống kê hệ thống
-- **Quản lý sản phẩm**: Thêm, sửa, xóa sản phẩm
-- **Quản lý đơn hàng**: Cập nhật trạng thái đơn hàng
-- **Quản lý người dùng**: Quản lý tài khoản khách hàng
-- **Thống kê doanh thu**: Báo cáo doanh thu theo ngày, tháng, năm
-- **Sản phẩm bán chạy**: Thống kê các sản phẩm có doanh số cao
-
-### 💡 Tính Năng Đặc Biệt
-- **Hỗ trợ trực tuyến**: Chatbox tích hợp sẵn
-- **Khuyến mãi**: Popup thông báo khuyến mãi
-- **Responsive Design**: Giao diện tương thích đa thiết bị
-- **Phân quyền người dùng**: Admin, Quản lý, Khách hàng
-
-## 🛠 Công Nghệ Sử Dụng
-
-### Backend
-- **Framework**: ASP.NET MVC 5 (.NET Framework 4.8)
-- **ORM**: Entity Framework 6.2
-- **Database**: SQL Server
-
-### Frontend
-- **HTML5 / CSS3**
-- **Bootstrap 5.2.3**
-- **jQuery 3.7.0**
-- **Font Awesome 6.4.2**
-- **Bootstrap Icons 1.11.1**
-
-### Packages & Libraries
-- Microsoft.AspNet.Mvc 5.2.9
-- Microsoft.AspNet.Razor 3.2.9
-- Microsoft.AspNet.WebPages 3.2.9
-- Newtonsoft.Json 13.0.3
-- jQuery.Validation 1.19.5
-- Modernizr 2.8.3
-- WebGrease 1.6.0
-
-## 💻 Yêu Cầu Hệ Thống
-
-### Phần Mềm
-- **Visual Studio 2022** (phiên bản 17.0 trở lên)
-- **SQL Server 2019** trở lên
-- **.NET Framework 4.8**
-- **IIS Express** hoặc **IIS**
-
-### Phần Cứng Tối Thiểu
-- RAM: 4GB
-- Ổ cứng: 10GB trống
-- CPU: 2 cores
-
-## 📥 Hướng Dẫn Cài Đặt
-
-### Bước 1: Clone Repository
-```bash
-git clone https://github.com/HoaiNam2k5/DA_HCSDL.git
-cd DA_HCSDL
-```
-
-### Bước 2: Thiết Lập Database
-1. Mở **SQL Server Management Studio (SSMS)**
-2. Thực thi file script `Database/QL_KHOScrip.sql` để tạo database và các bảng
-3. Script sẽ tự động tạo:
-   - Database `DT_DB`
-   - Các bảng dữ liệu
-   - Stored Procedures
-   - Functions
-   - Triggers
-   - Users và Roles
-
-### Bước 3: Cấu Hình Connection String
-1. Mở file `QL_Kho/Web.config`
-2. Cập nhật connection string phù hợp với SQL Server của bạn:
-```xml
-<connectionStrings>
-    <add name="Model1" 
-         connectionString="data source=YOUR_SERVER;initial catalog=DT_DB;user id=YOUR_USER;password=YOUR_PASSWORD;TrustServerCertificate=True;MultipleActiveResultSets=True;App=EntityFramework" 
-         providerName="System.Data.SqlClient" />
-</connectionStrings>
-```
-
-### Bước 4: Mở Project
-1. Mở file `QL_Kho.sln` bằng Visual Studio
-2. Đợi Visual Studio restore các NuGet packages tự động
-3. Hoặc restore thủ công qua **Tools > NuGet Package Manager > Package Manager Console**:
-```powershell
-Update-Package -reinstall
-```
-
-### Bước 5: Build và Chạy
-1. Nhấn **Ctrl + Shift + B** để build project
-2. Nhấn **F5** hoặc **Ctrl + F5** để chạy ứng dụng
-3. Ứng dụng sẽ chạy tại `https://localhost:44386/`
-
-## 📁 Cấu Trúc Thư Mục
-
-```
-DA_HCSDL/
-├── Database/
-│   └── QL_KHOScrip.sql          # Script tạo database
-├── QL_Kho/
-│   ├── App_Start/
-│   │   ├── BundleConfig.cs      # Cấu hình bundle CSS/JS
-│   │   ├── FilterConfig.cs      # Cấu hình filter
-│   │   └── RouteConfig.cs       # Cấu hình routing
-│   ├── Controllers/
-│   │   ├── AccountController.cs # Xử lý đăng nhập/đăng ký
-│   │   ├── AdminController.cs   # Chức năng quản trị
-│   │   ├── CartController.cs    # Xử lý giỏ hàng
-│   │   ├── HomeController.cs    # Trang chủ, sản phẩm
-│   │   └── ReportController.cs  # Báo cáo thống kê
-│   ├── Filters/
-│   │   └── AuthorizeRoleAttribute.cs # Phân quyền
-│   ├── Models/
-│   │   ├── AUDITLOG.cs          # Nhật ký hệ thống
-│   │   ├── CHITIETDONHANG.cs    # Chi tiết đơn hàng
-│   │   ├── DANHMUC.cs           # Danh mục sản phẩm
-│   │   ├── DONHANG.cs           # Đơn hàng
-│   │   ├── GIOHANG.cs           # Giỏ hàng
-│   │   ├── NGUOIDUNG.cs         # Người dùng
-│   │   ├── NHACUNGCAP.cs        # Nhà cung cấp
-│   │   ├── SANPHAM.cs           # Sản phẩm
-│   │   ├── Model1.cs            # DbContext
-│   │   └── ViewModels/          # Các ViewModel
-│   ├── Views/
-│   │   ├── Account/             # Views đăng nhập/đăng ký
-│   │   ├── Admin/               # Views quản trị
-│   │   ├── Cart/                # Views giỏ hàng
-│   │   ├── Home/                # Views trang chủ
-│   │   └── Shared/              # Layout chung
-│   ├── Content/
-│   │   ├── images/              # Hình ảnh sản phẩm
-│   │   ├── Site.css             # CSS chính
-│   │   ├── chatbox.css          # CSS chatbox
-│   │   └── promo.css            # CSS khuyến mãi
-│   ├── Scripts/
-│   │   └── site.js              # JavaScript chính
-│   ├── Web.config               # Cấu hình ứng dụng
-│   └── packages.config          # Danh sách packages
-├── packages/                    # Thư mục NuGet packages
-└── QL_Kho.sln                   # Solution file
-```
-
-## 📖 Hướng Dẫn Sử Dụng
-
-### Dành Cho Khách Hàng
-
-#### Đăng Ký Tài Khoản
-1. Truy cập trang web và nhấn **Đăng ký**
-2. Điền đầy đủ thông tin: tên người dùng, email, mật khẩu
-3. Nhấn **Đăng ký** để tạo tài khoản
-
-#### Mua Hàng
-1. **Đăng nhập** vào hệ thống
-2. Duyệt sản phẩm theo **Danh mục** hoặc sử dụng **Tìm kiếm**
-3. Nhấn vào sản phẩm để xem chi tiết
-4. Nhấn **Thêm vào giỏ hàng**
-5. Vào **Giỏ hàng** để kiểm tra
-6. Nhấn **Thanh toán**
-7. Điền thông tin giao hàng và xác nhận đơn hàng
-
-#### Quản Lý Đơn Hàng
-1. Nhấn vào avatar > **Đơn hàng của tôi**
-2. Xem danh sách đơn hàng và trạng thái
-3. Có thể hủy đơn hàng đang chờ xác nhận
-
-### Dành Cho Quản Trị Viên
-
-#### Truy Cập Admin
-1. Đăng nhập với tài khoản có role `admin` hoặc `quanly`
-2. Nhấn vào avatar > **Dashboard Admin**
-
-#### Quản Lý Đơn Hàng
-1. Vào **Quản lý đơn hàng**
-2. Cập nhật trạng thái: Chờ xác nhận → Đang giao → Đã giao
-
-#### Quản Lý Sản Phẩm
-1. Vào **Quản lý sản phẩm**
-2. Thêm mới hoặc chỉnh sửa thông tin sản phẩm
-3. Xóa sản phẩm (soft delete)
-
-## 🗄 Cơ Sở Dữ Liệu
-
-### Các Bảng Chính
-
-| Bảng             | Mô tả                     |
-|------------------|---------------------------|
-| NGUOIDUNG        | Thông tin người dùng      |
-| SANPHAM          | Thông tin sản phẩm        |
-| DANHMUC          | Danh mục sản phẩm         |
-| NHACUNGCAP       | Thông tin nhà cung cấp    |
-| GIOHANG          | Giỏ hàng của khách        |
-| DONHANG          | Đơn đặt hàng              |
-| CHITIETDONHANG   | Chi tiết đơn hàng         |
-| HOADON           | Hóa đơn bán hàng          |
-| CTHOADON         | Chi tiết hóa đơn          |
-| HOADONNHAPHANG   | Hóa đơn nhập hàng         |
-| PHIEUNHAP        | Phiếu nhập kho            |
-| AUDITLOG         | Nhật ký thay đổi          |
-| BACKUP_HISTORY   | Lịch sử backup            |
-
-### Stored Procedures
-- `proc_create_user`: Tạo tài khoản mới
-- `sp_TaoDonHang`: Tạo đơn hàng
-- `sp_ThemVaoGioHang`: Thêm sản phẩm vào giỏ
-- `sp_NhapHang`: Nhập hàng từ nhà cung cấp
-- `sp_TaoHoaDonBan`: Tạo hóa đơn bán
-- `sp_BackupDatabase`: Backup database
-- `sp_LowStockAlert`: Cảnh báo tồn kho thấp
-
-### Functions
-- `fun_check_account`: Kiểm tra đăng nhập
-- `fun_get_revenue_by_date`: Tính doanh thu theo ngày
-
-## 🤝 Đóng Góp
-
-Chúng tôi luôn chào đón mọi đóng góp! Để đóng góp:
-
-1. Fork repository này
-2. Tạo branch mới: `git checkout -b feature/TenTinhNang`
-3. Commit thay đổi: `git commit -m 'Thêm tính năng mới'`
-4. Push lên branch: `git push origin feature/TenTinhNang`
-5. Tạo Pull Request
-
-## 👥 Tác Giả
-
-- **HoaiNam2k5** - *Phát triển chính* - [GitHub](https://github.com/HoaiNam2k5)
-
-## 📄 License
-
-Dự án này được phát triển cho mục đích học tập môn Hệ Cơ Sở Dữ Liệu.
+That is exactly why **Phone Sales System (QL_Kho)** was born! It is not just an ordinary e-commerce website; it is a **comprehensive electronic warehouse management solution**. It seamlessly bridges the smooth, intuitive shopping experience for customers (Front-end) with the strict, absolute control required by store managers (Back-end & Database). From the moment a customer clicks "Add to Cart" to the second the product leaves the warehouse, every single piece of data is tracked, controlled, and reported in real-time.
 
 ---
 
+## 📌 System Description
+
+**Phone Sales System** is a Multi-tier Architecture web application developed on the **ASP.NET MVC 5** framework and **Entity Framework**. 
+
+The system implements a robust relational database model using **SQL Server**, fully utilizing advanced database features such as *Stored Procedures*, *Triggers*, and *Functions*. This ensures that complex business logic is handled directly at the data tier, guaranteeing data integrity, consistency, and high performance even when dealing with large transaction volumes. 
+
+The user interface is lean, responsive, and user-friendly, built with **HTML/CSS/JS** and **Bootstrap 5**, providing an optimal shopping experience across desktop, tablet, and mobile devices.
+
+---
+
+## ✨ Highlighted Features
+
+The system is designed to solve two major challenges: **Online Sales** and **Inventory Management**.
+
+### 🛍️ For Customers (Shopping Experience)
+- **Smart Search & Filter:** Quickly find the perfect smartphone by specifications, price range, or brand category.
+- **One-touch Cart & Checkout:** A seamless checkout experience with real-time order status tracking.
+- **Real-time Interaction:** Get instant support via the integrated Chatbox and catch the latest hot deals through promotional Popups.
+- **User Dashboard:** Manage personal profiles, view order history, and securely change passwords.
+
+### 🛡️ For Administrators (Management & Inventory)
+- **Automated Low Stock Alert:** The system automatically detects and alerts managers when product inventory falls below a safe threshold.
+- **Order Lifecycle Management:** Track orders seamlessly from *Pending -> Processing -> Shipping -> Delivered*.
+- **Audit Logging (Security Log):** Every sensitive data modification is tracked by the system (Who changed it? When was it changed?) to prevent data loss and internal fraud.
+- **Visual Statistics Dashboard:** Provides a comprehensive overview of daily/monthly/yearly revenue and best-selling products.
+
+---
+
+## 🔄 Core Business Flow
+
+> **The system bridges the gap between customer actions and warehouse operations through a seamless business flow:**
+
+1. **Browsing & Discovery:** Customers visit the store, filter products by categories or brands, and view detailed phone specifications.
+2. **Cart Management & Checkout:** Customers add desired items to their shopping cart and proceed to checkout, generating a new *Pending Order* (`DONHANG`).
+3. **Order Processing (Admin):** Store administrators review the *Pending Order* via the Admin Dashboard. Upon confirmation, the order status changes to *Processing/Shipping*.
+4. **Inventory Deduction & Fulfillment:** A database transaction is triggered. The system automatically deducts the purchased quantity from the warehouse inventory (`SANPHAM`). If stock falls below a predefined threshold, an automated *Low Stock Alert* is generated.
+5. **Shipping & Delivery:** Once the order is dispatched and delivered, the status is updated to *Completed*. The system automatically logs the revenue and generates a Sales Invoice (`HOADON`).
+6. **Restocking (Warehouse):** When inventory runs low, the Admin creates an Import Invoice (`HOADONNHAPHANG`) from suppliers. Upon arrival, the system updates the inventory levels, completing the product lifecycle.
+
+---
+
+## 📊 ERD (Entity-Relationship Diagram)
+
+This diagram illustrates the relationships between the core entities in the sales and inventory management system.
+
+```mermaid
+erDiagram
+    NGUOIDUNG ||--o{ DONHANG : places
+    NGUOIDUNG ||--o{ GIOHANG : has
+    DANHMUC ||--|{ SANPHAM : categorizes
+    NHACUNGCAP ||--|{ SANPHAM : supplies
+    NHACUNGCAP ||--o{ HOADONNHAPHANG : provides
+    SANPHAM ||--o{ CHITIETDONHANG : includes
+    SANPHAM ||--o{ GIOHANG : contains
+    DONHANG ||--|{ CHITIETDONHANG : has
+    DONHANG ||--o| HOADON : generates
+    HOADONNHAPHANG ||--|{ PHIEUNHAP : has
+```
+
+---
+
+## 🧾 Database Tables
+
+The system uses the `DT_DB` database, which is strictly designed and standardized:
+
+| Table Name | Description |
+| :--- | :--- |
+| **`NGUOIDUNG`** | Manages user accounts (Customers, Admins, Managers) and authentication. |
+| **`SANPHAM`** | Stores phone details, current stock quantities, and pricing. |
+| **`DANHMUC`** | Categorizes products by brands or phone series. |
+| **`NHACUNGCAP`** | Information about distributors and goods suppliers. |
+| **`GIOHANG`** | Stores items that customers currently intend to purchase. |
+| **`DONHANG`** | General order information (Order Status, Total Amount, Shipping Details). |
+| **`CHITIETDONHANG`**| Specific items, quantities, and prices within a specific order. |
+| **`HOADON`** | Official sales invoices issued to customers upon order completion. |
+| **`CTHOADON`** | Detailed line items for the sales invoices. |
+| **`HOADONNHAPHANG`**| Import records for restocking inventory from suppliers. |
+| **`PHIEUNHAP`** | Specific product details, imported quantities, and cost prices for each import. |
+| **`AUDITLOG`** | Security audit trail, automatically logging crucial changes via SQL Triggers. |
+| **`BACKUP_HISTORY`**| History logs of routine database backups. |
+
+---
+
+## ⚙️ Database Setup (How to run SQL)
+
+To ensure the application functions correctly, you must set up the database before running the code. The system has packaged all Stored Procedures, Triggers, and mock data into a single SQL Script.
+
+**Execution Steps:**
+1. Open **SQL Server Management Studio (SSMS)** and connect to your local or remote SQL Server.
+2. Open the prepared script file located at: `Database/QL_KHOScrip.sql`.
+3. Press **F5** (or click **Execute**) to run the entire script.
+   * *This script will automatically check and create the `DT_DB` database, build all tables and relationships, insert mock data, and initialize all necessary Stored Procedures, Functions, and Triggers.*
+4. Open the `Web.config` file in the `QL_Kho` project directory.
+5. Update the `connectionString` to point to your SQL Server (Replace `YOUR_SERVER`, `YOUR_USER`, and `YOUR_PASSWORD`):
+   ```xml
+   <connectionStrings>
+       <add name="Model1" 
+            connectionString="data source=YOUR_SERVER;initial catalog=DT_DB;user id=YOUR_USER;password=YOUR_PASSWORD;TrustServerCertificate=True;MultipleActiveResultSets=True;App=EntityFramework" 
+            providerName="System.Data.SqlClient" />
+   </connectionStrings>
+   ```
+
+---
+
+## 📥 Installation Guide
+
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/HoaiNam2k5/DA_HCSDL.git
+   cd DA_HCSDL
+   ```
+2. **Setup the Database:** Follow the instructions in the **⚙️ Database Setup** section above.
+3. **Open the Project:** Open the `QL_Kho.sln` solution file using **Visual Studio 2022**.
+4. **Restore Packages:** Go to `Tools > NuGet Package Manager > Package Manager Console` and run the command: 
+   ```powershell
+   Update-Package -reinstall
+   ```
+5. **Run the Application:** Press `Ctrl + F5` or click the Run button in Visual Studio to launch the system!
+
+---
+
+## 👥 Author
+
+- **HoaiNam2k5** - *Database Design & Fullstack Development* - [GitHub Profile](https://github.com/HoaiNam2k5)
+
 <div align="center">
-  <p>⭐ Nếu dự án hữu ích, hãy cho chúng tôi một sao! ⭐</p>
-  <p>Made with ❤️ by HoaiNam2k5</p>
+  <p>⭐ If you find this project helpful or interesting, please consider giving it a Star! ⭐</p>
+  <p>Made with ❤️ by HoaiNam2k5 for Database Management Systems</p>
 </div>
